@@ -10,6 +10,7 @@ pi.dir_servo_angle_calibration(CALIBRATION_ANGLE)
 if __name__ == "__main__":
     pi.forward(50)
     delay(1000)
+    pi.stop()
     pi.set_dir_servo_angle(TEST_TURN_ANGLE)
     delay(1000)
     pi.forward(50, turn_angle=TEST_TURN_ANGLE)
