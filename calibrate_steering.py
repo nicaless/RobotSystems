@@ -1,7 +1,7 @@
 from ezblock import delay
 import picarx_improved as pi
 
-CALIBRATION_ANGLE = 2  # MODIFY THIS UNTIL CAR DRIVES STRAIGHT
+CALIBRATION_ANGLE = 0  # MODIFY THIS UNTIL CAR DRIVES STRAIGHT
 TEST_TURN_ANGLE = 30
 pi.dir_servo_angle_calibration(CALIBRATION_ANGLE)
 if __name__ == "__main__":

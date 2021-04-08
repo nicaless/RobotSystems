@@ -1,10 +1,10 @@
 import atexit
 import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
-import time
 
 try:
     from ezblock import *
+    import time
     __reset_mcu__()
     time.sleep(0.01)
 except ImportError:
@@ -23,6 +23,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 PERIOD = 4095
 TIMEOUT = 0.02
 VEHICLE_WITH = 7  # 7 centimeters
+CALIBRATION_ANGLE = 2  # use calibration_steering.py to determine this
 
 dir_servo_pin = Servo(PWM('P2'))
 camera_servo_pin1 = Servo(PWM('P0'))
@@ -192,5 +193,8 @@ def test():
 #     finally: 
 #         stop()
 
-'''SET MOTORS TO 0 SPEED'''
+'''SET CALIBRATION ANGLE ON IMPORT'''
+dir_servo_angle_calibration(CALIBRATION_ANGLE)
+
+'''SET MOTORS TO 0 SPEED AT EXIT'''
 atexit.register(stop)
