@@ -5,6 +5,8 @@ import time
 
 try:
     from ezblock import *
+    __reset_mcu__()
+    time.sleep(0.01)
 except ImportError:
     print('This computer does not appear to be a PiCar -X system (/opt/ezblock '
           'is not present). Shadowing hardware call swith substitute functions')

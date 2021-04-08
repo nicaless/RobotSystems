@@ -1,7 +1,4 @@
-from ezblock import __reset_mcu__, delay
-import time
-__reset_mcu__()
-time.sleep(0.01)
+from ezblock import delay
 import picarx_improved as pi
 
 CALIBRATION_ANGLE = 2  # MODIFY THIS UNTIL CAR DRIVES STRAIGHT
