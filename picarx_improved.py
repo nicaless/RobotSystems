@@ -132,6 +132,7 @@ def backward(speed):
     set_motor_speed(1, speed)
     set_motor_speed(2, speed)
 
+@log_on_error(logging.DEBUG, "ERROR forward {e!r}", reraise=True)
 def forward(speed, turn_angle=0):
     if turn_angle == 0:
         set_motor_speed(1, -1*speed)
@@ -140,8 +141,12 @@ def forward(speed, turn_angle=0):
         v1 = -1*speed
         r = (speed * 360) / (turn_angle * 2 * 3.14)
         v2 = v1 * (r/VEHICLE_WITH + 1) / (r/VEHICLE_WITH - 1)
-        set_motor_speed(1, v1)
-        set_motor_speed(1, v2)
+        if turn_angle > 0:
+            set_motor_speed(1, v1)
+            set_motor_speed(2, v2)
+        else:
+            set_motor_speed(2, v1)
+            set_motor_speed(1, v2)
 
 
 def stop():
