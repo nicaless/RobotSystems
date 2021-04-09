@@ -165,6 +165,7 @@ def forward(speed, turn_angle=0):
 def stop():
     set_motor_speed(1, 0)
     set_motor_speed(2, 0)
+    set_dir_servo_angle(0)
 
 
 def Get_distance():

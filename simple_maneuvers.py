@@ -57,7 +57,7 @@ def parallel_park(direction='left'):
     drives backward at angle for a time, then stops
     turns towards opposite direction
     drives backward at angle for a time, then stops
-    drives forward for a short time, then stops
+    drives forward for a short time, then stopssud
 
     :param direction:
     '''
