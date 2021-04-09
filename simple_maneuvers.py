@@ -32,6 +32,8 @@ def go_backward_straight():
 @log_on_error(logging.DEBUG, "ERROR go_forward_at_angle, {e!r}", reraise=True)
 @log_on_end(logging.DEBUG, "ERROR go_forward_at_angle")
 def go_forward_at_angle(angle):
+    pi.set_dir_servo_angle(angle)
+    delay(DEFAULT_DELAY)
     pi.forward(DEFAULT_SPEED, turn_angle=angle)
     delay(DEFAULT_DELAY)
     pi.stop()
