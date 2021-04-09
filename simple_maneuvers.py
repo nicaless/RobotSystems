@@ -10,7 +10,7 @@ PARALLEL_PARK_ANGLE = 10
 K_TURN_ANGLE = 30
 
 @log_on_start(logging.DEBUG, "BEGIN go_forward_straight")
-@log_on_error(logging.DEBUG, "ERROR go_forward_straight")
+@log_on_error(logging.DEBUG, "ERROR go_forward_straight, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR go_forward_straight")
 def go_forward_straight():
     pi.forward(DEFAULT_SPEED)
@@ -18,23 +18,23 @@ def go_forward_straight():
     pi.stop()
 
 @log_on_start(logging.DEBUG, "BEGIN go_backward_straight")
-@log_on_error(logging.DEBUG, "ERROR go_backward_straight")
+@log_on_error(logging.DEBUG, "ERROR go_backward_straight, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR go_backward_straight")
 def go_backward_straight():
     pi.forward(-1*DEFAULT_SPEED)
     delay(DEFAULT_DELAY)
     pi.stop()
 
-@log_on_start(logging.DEBUG, "BEGIN go_forward_at_angle {angle:s}")
-@log_on_start(logging.DEBUG, "ERROR go_forward_at_angle")
+@log_on_start(logging.DEBUG, "BEGIN go_forward_at_angle {angle:d}")
+@log_on_start(logging.DEBUG, "ERROR go_forward_at_angle, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR go_forward_at_angle")
 def go_forward_at_angle(angle):
     pi.forward(DEFAULT_SPEED, turn_angle=angle)
     delay(DEFAULT_DELAY)
     pi.stop()
 
-@log_on_error(logging.DEBUG, "BEGIN go_backward_at_angle {angle:s}")
-@log_on_error(logging.DEBUG, "ERROR go_backward_at_angle")
+@log_on_error(logging.DEBUG, "BEGIN go_backward_at_angle {angle:d}")
+@log_on_error(logging.DEBUG, "ERROR go_backward_at_angle, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR go_backward_at_angle")
 def go_backward_at_angle(angle):
     pi.forward(-1*DEFAULT_SPEED, turn_angle=angle)
@@ -42,7 +42,7 @@ def go_backward_at_angle(angle):
     pi.stop()
 
 @log_on_error(logging.DEBUG, "BEGIN parallel_park direction: {direction:s}")
-@log_on_error(logging.DEBUG, "ERROR parallel_park")
+@log_on_error(logging.DEBUG, "ERROR parallel_park, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR parallel_park")
 def parallel_park(direction='left'):
     '''
@@ -58,7 +58,7 @@ def parallel_park(direction='left'):
     pass
 
 @log_on_error(logging.DEBUG, "BEGIN k_turn, direction: {direction:s}")
-@log_on_error(logging.DEBUG, "ERROR k_turn")
+@log_on_error(logging.DEBUG, "ERROR k_turn, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR k_turn")
 def k_turn(direction='left'):
     """
