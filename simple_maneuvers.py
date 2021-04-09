@@ -6,7 +6,7 @@ import picarx_improved as pi
 
 DEFAULT_SPEED = 50
 DEFAULT_DELAY = 1000
-PARALLEL_PARK_ANGLE = 10
+PARALLEL_PARK_ANGLE = 30
 K_TURN_ANGLE = 30
 
 @log_on_start(logging.DEBUG, "BEGIN go_forward_straight")
@@ -47,8 +47,8 @@ def go_backward_at_angle(angle):
     pi.stop()
     delay(DEFAULT_DELAY)
 
-@log_on_start(logging.DEBUG, "BEGIN parallel_park direction: {direction:s}")
-@log_on_error(logging.DEBUG, "ERROR parallel_park, {e!r}")
+@log_on_start(logging.DEBUG, "BEGIN parallel_park")
+@log_on_error(logging.ERROR, "ERROR parallel_park, {e!r}")
 @log_on_end(logging.DEBUG, "ERROR parallel_park")
 def parallel_park(direction='left'):
     '''
@@ -66,20 +66,20 @@ def parallel_park(direction='left'):
         angle = PARALLEL_PARK_ANGLE
     else:
         angle = -1*PARALLEL_PARK_ANGLE
-    pi.set_dir_servo_angle(angle)
-    delay(DEFAULT_DELAY)
+    print(angle)
+    #delay(DEFAULT_DELAY)
     go_backward_at_angle(angle)
 
-    pi.set_dir_servo_angle(-1*angle)
-    delay(DEFAULT_DELAY)
+    #pi.set_dir_servo_angle(-1*angle)
+    #delay(DEFAULT_DELAY)
     go_backward_at_angle(-1*angle)
 
-    pi.set_dir_servo_angle(0)
-    delay(DEFAULT_DELAY)
-    pi.forward(0.5 * DEFAULT_SPEED)
-    delay(DEFAULT_DELAY)
-    pi.stop()
-    delay(DEFAULT_DELAY)
+    #pi.set_dir_servo_angle(0)
+    #delay(DEFAULT_DELAY)
+    go_forward_at_angle(0)
+    #delay(DEFAULT_DELAY)
+    #pi.stop()
+    #delay(DEFAULT_DELAY)
 
 @log_on_start(logging.DEBUG, "BEGIN k_turn, direction: {direction:s}")
 @log_on_error(logging.DEBUG, "ERROR k_turn, {e!r}")
