@@ -4,6 +4,7 @@ from logdecorator import log_on_start, log_on_end, log_on_error
 
 try:
     from ezblock import *
+    from ezblock import __reset_mcu__
     import time
     __reset_mcu__()
     time.sleep(0.01)
