@@ -12,6 +12,7 @@ if __name__ == "__main__":
     delay(1000)
     pi.forward(30, turn_angle=TEST_TURN_ANGLE)
     delay(1000)
+    pi.stop()
     pi.set_dir_servo_angle(0)
     delay(1000)
     pi.forward(50)

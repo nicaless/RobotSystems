@@ -19,6 +19,7 @@ logging.basicConfig(format=logging_format, level=logging.INFO,
                     datefmt ="%H:%M:%S")
 # COMMENT OUT BELOW LINE TO SUPPRESS DEBUG MESSAGES
 logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.ERROR)
 '''END LOGGING SETUP'''
 
 PERIOD = 4095
