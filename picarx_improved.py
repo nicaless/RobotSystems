@@ -17,8 +17,8 @@ except ImportError:
 logging_format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=logging_format, level=logging.INFO,
                     datefmt ="%H:%M:%S")
-# COMMENT OUT BELOW LINE TO SUPPRESS DEBUG MESSAGES
-logging.getLogger().setLevel(logging.DEBUG)
+# COMMENT OUT BELOW LINE TO SUPPRESS DEBUG/ERROR MESSAGES
+# logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().setLevel(logging.ERROR)
 '''END LOGGING SETUP'''
 
@@ -129,9 +129,21 @@ def set_power(speed):
     set_motor_speed(1, speed)
     set_motor_speed(2, speed) 
 
-def backward(speed):
-    set_motor_speed(1, speed)
-    set_motor_speed(2, speed)
+@log_on_error(logging.DEBUG, "ERROR backward {e!r}", reraise=True)
+def backward(speed, turn_angle=0):
+    if turn_angle == 0:
+        set_motor_speed(1, speed)
+        set_motor_speed(2, speed)
+    else:
+        v1 = speed
+        r = (speed * 360) / (turn_angle * 2 * 3.14)
+        v2 = v1 * (r/VEHICLE_WITH + 1) / (r/VEHICLE_WITH - 1)
+        if turn_angle > 0:
+            set_motor_speed(1, v1)
+            set_motor_speed(2, v2)
+        else:
+            set_motor_speed(2, v1)
+            set_motor_speed(1, v2)
 
 @log_on_error(logging.DEBUG, "ERROR forward {e!r}", reraise=True)
 def forward(speed, turn_angle=0):
