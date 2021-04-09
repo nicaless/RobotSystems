@@ -18,14 +18,14 @@ logging_format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=logging_format, level=logging.INFO,
                     datefmt ="%H:%M:%S")
 # COMMENT OUT BELOW LINE TO SUPPRESS DEBUG/ERROR MESSAGES
-# logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.ERROR)
+logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.ERROR)
 '''END LOGGING SETUP'''
 
 PERIOD = 4095
 TIMEOUT = 0.02
 VEHICLE_WITH = 7  # 7 centimeters
-CALIBRATION_ANGLE = 2  # use calibration_steering.py to determine this
+CALIBRATION_ANGLE = 0  # use calibration_steering.py to determine this
 
 dir_servo_pin = Servo(PWM('P2'))
 camera_servo_pin1 = Servo(PWM('P0'))
