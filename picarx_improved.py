@@ -51,6 +51,9 @@ cali_speed_value = [0, 0]
 for pin in motor_speed_pins:
     pin.period(PERIOD)
 
+def delay(ms):
+    time.sleep(ms/1000)
+
 def set_motor_speed(motor, speed):
     global cali_speed_value,cali_dir_value
     motor -= 1
@@ -139,11 +142,11 @@ def backward(speed, turn_angle=0):
         r = (speed * 360) / (turn_angle * 2 * 3.14)
         v2 = v1 * (r/VEHICLE_WITH + 1) / (r/VEHICLE_WITH - 1)
         if turn_angle > 0:
-            set_motor_speed(1, v1)
-            set_motor_speed(2, v2)
+            set_motor_speed(1, -1*max([v1, v2]))
+            set_motor_speed(2, -1*min([v1, v2]))
         else:
-            set_motor_speed(2, v1)
-            set_motor_speed(1, v2)
+            set_motor_speed(2, -1 * max([v1, v2]))
+            set_motor_speed(1, -1 * min([v1, v2]))
 
 @log_on_error(logging.DEBUG, "ERROR forward {e!r}", reraise=True)
 def forward(speed, turn_angle=0):
@@ -151,15 +154,15 @@ def forward(speed, turn_angle=0):
         set_motor_speed(1, -1*speed)
         set_motor_speed(2, -1*speed)
     else:
-        v1 = -1*speed
+        v1 = speed
         r = (speed * 360) / (turn_angle * 2 * 3.14)
         v2 = v1 * (r/VEHICLE_WITH + 1) / (r/VEHICLE_WITH - 1)
         if turn_angle > 0:
-            set_motor_speed(1, v1)
-            set_motor_speed(2, v2)
+            set_motor_speed(1, -1*max([v1, v2]))
+            set_motor_speed(2, -1*min([v1, v2]))
         else:
-            set_motor_speed(2, v1)
-            set_motor_speed(1, v2)
+            set_motor_speed(2, -1 * max([v1, v2]))
+            set_motor_speed(1, -1 * min([v1, v2]))
 
 
 def stop():
