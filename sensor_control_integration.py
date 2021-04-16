@@ -41,3 +41,5 @@ if __name__ == "__main__":
     test_interpreter(sensor, interpreter)
     test_controller(sensor, interpreter, controller)
 
+    # move_forward()
+
