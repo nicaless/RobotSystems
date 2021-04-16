@@ -42,10 +42,6 @@ class PiCarX:
         self._left_rear_dir_pin = Pin("D4")
         self._right_rear_dir_pin = Pin("D5")
 
-        self._S0 = ADC('A0')
-        self._S1 = ADC('A1')
-        self._S2 = ADC('A2')
-
         self._Servo_dir_flag = 1
         self._dir_cal_value = 0
         self._cam_cal_value_1 = 0
@@ -116,7 +112,14 @@ class PiCarX:
     def stop(self):
         self._set_motor_speed(self.LEFT_MOTOR, 0)
         self._set_motor_speed(self.RIGHT_MOTOR, 0)
-        self._set_dir_servo_angle(self._calibration_angle)
+        self.set_dir_servo_angle(self._calibration_angle)
+
+    def set_dir_servo_angle(self, value):
+        self._dir_servo_pin.angle(value + self._dir_cal_value)
+
+    def _dir_servo_angle_calibration(self, value):
+        self._dir_cal_value = value
+        self.set_dir_servo_angle(self._dir_cal_value)
 
     def _set_motor_speed(self, motor, speed):
         if speed >= 0:
@@ -151,13 +154,118 @@ class PiCarX:
         if value == 1:
             self._cali_dir_value[motor] = -1 * self._cali_dir_value[motor]
 
-    def _dir_servo_angle_calibration(self, value):
-        self._dir_cal_value = value
-        self._set_dir_servo_angle(self._dir_cal_value)
-
-    def _set_dir_servo_angle(self, value):
-        self._dir_servo_pin.angle(value + self._dir_cal_value)
-
     def _set_power(self, speed):
         self._set_motor_speed(self.LEFT_MOTOR, speed)
         self._set_motor_speed(self.RIGHT_MOTOR, speed)
+
+
+class Sensor:
+    def __init__(self):
+        self.adc = [ADC('A0'), ADC('A1'), ADC('A2')]
+
+    @log_on_error(logging.ERROR, "ERROR Sensor.get_adc_values {e!r}")
+    def get_adc_values(self):
+        # sensor returns high value for lighter value
+        # 200-500 black, 1100-1200 for white
+        return [adc.read() for adc in self.adcs]
+
+class Interpreter:
+    def __init__(self, sensitivity=50, polarity=1):
+        '''
+
+        :param sensitivity: fine tune difference between line and floor
+        :param polarity: [-1, 1],
+            1 is line is darker than floor (or floor is really light colored)
+            -1 is line is lighter than floor (or floor is really dark colored)
+        '''
+        self.LEFT = 0
+        self.MID = 1
+        self.RIGHT = 2
+        self.sensitivity = sensitivity
+        self.polarity = polarity
+
+    @log_on_start(logging.DEBUG, "BEGIN Interpreter.relative_line_position")
+    @log_on_end(logging.DEBUG, "END Interpreter.relative_line_position")
+    @log_on_error(logging.ERROR, "ERROR Interpreter.relative_line_position {e!r}")
+    def relative_line_position(self, adv_values, target=300):
+        '''
+        get direction to turn towards, scaled by line offset,
+        line offset is avg % difference from target of
+        channels with sighted target
+
+        :param adv_values: from sensor object
+        :param target: the
+        :return:
+        '''
+        target_locs = self._find_target(adv_values, target)
+        if target_locs == [0, 1, 0] or target_locs == [1, 1, 1]:
+            direction = 0
+        elif target_locs == [1, 0, 0] or target_locs == [1, 1, 0]:
+            direction = -1
+        elif target_locs == [0, 0, 1] or target_locs == [0, 1, 1]:
+            direction = 1
+        else:
+            return None
+
+        diffs = []
+        for i, v in enumerate(adv_values):
+            if target_locs[i] == 1:
+                diffs.append(abs(target - v) / self.sensitivity)
+        offset = min(1, sum(diffs) / len(diffs))
+
+        return direction * offset
+
+    @log_on_error(logging.ERROR, "ERROR Interpreter._find_target {e!r}")
+    def _find_target(self, adv_values, target):
+        left = self._sensor_sees_target(self.LEFT, adv_values, target)
+        mid = self._sensor_sees_target(self.MID, adv_values, target)
+        right = self._sensor_sees_target(self.RIGHT, adv_values, target)
+        return [left, mid, right]
+
+    @log_on_start(logging.DEBUG, "BEGIN Interpreter._sensor_sees_target")
+    @log_on_end(logging.DEBUG, "END Interpreter._sensor_sees_target")
+    @log_on_error(logging.ERROR, "ERROR Interpreter._sensor_sees_target {e!r}")
+    def _sensor_sees_target(self, sensor_id, adv_values, target):
+        if self.polarity == 1:
+            # if line is darker than floor, want target value to be higher than
+            # measured value
+            if target > (adv_values[sensor_id] + self.sensitivity):
+                return 1
+            else:
+                return 0
+        else:
+            # if line is line than floor, want target value to be lower than
+            # measured value
+            if target < (adv_values[sensor_id] - self.sensitivity):
+                return 1
+            else:
+                return 0
+
+
+class Controller:
+    def __init__(self, picarx_obj, scale=10):
+        self.pi = picarx_obj
+        self.scale = scale
+
+    @log_on_start(logging.DEBUG, "BEGIN Controller.turn_to_line")
+    @log_on_end(logging.DEBUG, "END Controller.turn_to_line")
+    @log_on_error(logging.ERROR, "ERROR Controller.turn_to_line {e!r}")
+    def turn_to_line(self, rel_line_pos, scale=None):
+        if rel_line_pos is None:
+            self.pi.stop()
+            return 0
+        scale = self.scale if scale is None else scale
+        steering_angle = rel_line_pos * scale
+        self.pi.set_dir_servo_angle(steering_angle)
+        return steering_angle
+
+
+
+
+
+
+
+
+
+
+
