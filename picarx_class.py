@@ -85,11 +85,11 @@ class PiCarX:
             vehicle_width = self._vehicle_width
             v2 = v1 * (r / vehicle_width + 1) / (r / vehicle_width - 1)
             if turn_angle > 0:
-                self._set_motor_speed(self.LEFT_MOTOR, -1 * max([v1, v2]))
-                self._set_motor_speed(self.RIGHT_MOTOR, -1 * min([v1, v2]))
+                self._set_motor_speed(self.LEFT_MOTOR, max([v1, v2]))
+                self._set_motor_speed(self.RIGHT_MOTOR, min([v1, v2]))
             else:
-                self._set_motor_speed(self.RIGHT_MOTOR, -1 * max([v1, v2]))
-                self._set_motor_speed(self.LEFT_MOTOR, -1 * min([v1, v2]))
+                self._set_motor_speed(self.RIGHT_MOTOR, max([v1, v2]))
+                self._set_motor_speed(self.LEFT_MOTOR, min([v1, v2]))
 
     @log_on_error(logging.ERROR, "ERROR forward {e!r}")
     def forward(self, speed, turn_angle=0):
