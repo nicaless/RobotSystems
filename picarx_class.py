@@ -293,4 +293,5 @@ class Controller:
         scale = self.scale if scale is None else scale
         steering_angle = rel_line_pos * scale
         self.pi.set_dir_servo_angle(steering_angle)
+        self.pi.delay(1000)
         return steering_angle

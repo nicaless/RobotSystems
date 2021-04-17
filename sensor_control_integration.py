@@ -36,8 +36,8 @@ def test_controller(sens, interp, c):
 
 if __name__ == "__main__":
     pi = PiCarX(logging_on=True)
-    sens = Sensor()
-    interp = Interpreter(sensitivity=10)
+    sens = Sensor(logging_on=True)
+    interp = Interpreter(sensitivity=10, logging_on=True)
     con = Controller(pi, scale=30, logging_on=True)
 
     #test_sensor(sens)

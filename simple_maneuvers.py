@@ -1,6 +1,9 @@
 import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
-import picarx_improved as pi
+#import picarx_improved as pi
+from picarx_class import PiCarX
+
+pi = PiCarX(logging_on=True)
 
 
 DEFAULT_SPEED = 50
@@ -97,13 +100,14 @@ def k_turn(direction='left'):
 
 
 if __name__ == "__main__":
-    go_forward_straight()
-    go_backward_straight()
+    pi.set_dir_servo_angle(30)
+    #go_forward_straight()
+    #go_backward_straight()
     go_forward_at_angle(30)
-    go_backward_at_angle(30)
-    go_forward_at_angle(-30)
-    go_backward_at_angle(-30)
-    parallel_park()
-    parallel_park(direction='right')
-    k_turn()
-    k_turn(direction='right')
+    #go_backward_at_angle(30)
+    #go_forward_at_angle(-30)
+    #go_backward_at_angle(-30)
+    #parallel_park()
+    #parallel_park(direction='right')
+    #k_turn()
+    #k_turn(direction='right')
