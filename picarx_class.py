@@ -167,7 +167,7 @@ class Sensor:
     def get_adc_values(self):
         # sensor returns high value for lighter value
         # 200-500 black, 1100-1200 for white
-        return [adc.read() for adc in self.adcs]
+        return [adc.read() for adc in self.adc]
 
 class Interpreter:
     def __init__(self, sensitivity=50, polarity=1):

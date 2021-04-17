@@ -23,23 +23,24 @@ def test_sensor(sensor):
 def test_interpreter(sensor, interpreter):
     for i in range(50):
         adc_values = sensor.get_adc_values()
-        print(interpreter._find_target(adc_values))
-        print(interpreter.relative_line_position(adc_values))
+        print(interpreter._find_target(adc_values, 500))
+        print(interpreter.relative_line_position(adc_values, 500))
 
-def test_controller(sensor, interpreter, controller):
-    rel_line_pos = interpreter.relative_line_position(sensor.get_adc_values())
-    controller.turn_to_line(rel_line_pos)
+def test_controller(sensor, interpreter, c):
+    rel_line_pos = interpreter.relative_line_position(sensor.get_adc_values(), 500)
+    c.turn_to_line(rel_line_pos)
 
 
 if __name__ == "__main__":
     pi = PiCarX()
     sensor = Sensor()
-    interpreter = Interpreter()
-    controller = Controller(pi)
+    interpreter = Interpreter(sensitivity=10)
+    c = Controller(pi, scale=30)
 
     test_sensor(sensor)
     test_interpreter(sensor, interpreter)
-    test_controller(sensor, interpreter, controller)
+    test_controller(sensor, interpreter, c)
 
     # move_forward()
+
 
