@@ -160,8 +160,19 @@ class PiCarX:
 
 
 class Sensor:
-    def __init__(self):
+    def __init__(self, logging_on=False):
         self.adc = [ADC('A0'), ADC('A1'), ADC('A2')]
+        self.logging = logging_on
+        if self.logging:
+            self.toggle_logging()
+
+    def toggle_logging(self):
+        if self.logging:
+            logging.getLogger().setLevel(logging.ERROR)
+            self.logging = False
+        else:
+            logging.getLogger().setLevel(logging.DEBUG)
+            self.logging = True
 
     @log_on_error(logging.ERROR, "ERROR Sensor.get_adc_values {e!r}")
     def get_adc_values(self):
@@ -170,7 +181,7 @@ class Sensor:
         return [adc.read() for adc in self.adc]
 
 class Interpreter:
-    def __init__(self, sensitivity=50, polarity=1):
+    def __init__(self, sensitivity=50, polarity=1, logging_on=False):
         '''
 
         :param sensitivity: fine tune difference between line and floor
@@ -178,11 +189,23 @@ class Interpreter:
             1 is line is darker than floor (or floor is really light colored)
             -1 is line is lighter than floor (or floor is really dark colored)
         '''
+
+        self.logging = logging_on
+        if self.logging:
+            self.toggle_logging()
         self.LEFT = 0
         self.MID = 1
         self.RIGHT = 2
         self.sensitivity = sensitivity
         self.polarity = polarity
+
+    def toggle_logging(self):
+        if self.logging:
+            logging.getLogger().setLevel(logging.ERROR)
+            self.logging = False
+        else:
+            logging.getLogger().setLevel(logging.DEBUG)
+            self.logging = True
 
     @log_on_start(logging.DEBUG, "BEGIN Interpreter.relative_line_position")
     @log_on_end(logging.DEBUG, "END Interpreter.relative_line_position")
@@ -229,23 +252,36 @@ class Interpreter:
         if self.polarity == 1:
             # if line is darker than floor, want target value to be higher than
             # measured value
-            if target > (adv_values[sensor_id] + self.sensitivity):
+            if (target > (adv_values[sensor_id] + self.sensitivity)) or \
+                    (target > (adv_values[sensor_id] - self.sensitivity)):
                 return 1
             else:
                 return 0
         else:
             # if line is line than floor, want target value to be lower than
             # measured value
-            if target < (adv_values[sensor_id] - self.sensitivity):
+            if (target < (adv_values[sensor_id] - self.sensitivity)) or \
+                    (target < adv_values[sensor_id] - self.sensitivity):
                 return 1
             else:
                 return 0
 
 
 class Controller:
-    def __init__(self, picarx_obj, scale=10):
+    def __init__(self, picarx_obj, scale=10, logging_on=False):
         self.pi = picarx_obj
         self.scale = scale
+        self.logging = logging_on
+        if self.logging:
+            self.toggle_logging()
+
+    def toggle_logging(self):
+        if self.logging:
+            logging.getLogger().setLevel(logging.ERROR)
+            self.logging = False
+        else:
+            logging.getLogger().setLevel(logging.DEBUG)
+            self.logging = True
 
     @log_on_start(logging.DEBUG, "BEGIN Controller.turn_to_line")
     @log_on_end(logging.DEBUG, "END Controller.turn_to_line")
@@ -258,14 +294,3 @@ class Controller:
         steering_angle = rel_line_pos * scale
         self.pi.set_dir_servo_angle(steering_angle)
         return steering_angle
-
-
-
-
-
-
-
-
-
-
-
