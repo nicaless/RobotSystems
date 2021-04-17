@@ -286,12 +286,12 @@ class Controller:
     @log_on_start(logging.DEBUG, "BEGIN Controller.turn_to_line")
     @log_on_end(logging.DEBUG, "END Controller.turn_to_line")
     @log_on_error(logging.ERROR, "ERROR Controller.turn_to_line {e!r}")
-    def turn_to_line(self, rel_line_pos, scale=None):
+    def turn_to_line(self, rel_line_pos, scale=None, delay=50):
         if rel_line_pos is None:
             self.pi.stop()
             return None
         scale = self.scale if scale is None else scale
         steering_angle = rel_line_pos * scale
         self.pi.set_dir_servo_angle(steering_angle)
-        self.pi.delay(1000)
+        self.pi.delay(delay)
         return steering_angle

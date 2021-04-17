@@ -1,6 +1,6 @@
 from picarx_class import Controller, Interpreter, PiCarX, Sensor
 
-def move_forward(sensitivity=10, polarity=1, target=500, speed=10, delay=1000):
+def move_forward(sensitivity=10, polarity=1, target=500, speed=1, delay=20):
     pi = PiCarX()
     sens = Sensor()
     interp = Interpreter(sensitivity=sensitivity,
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     #test_sensor(sens)
     #test_interpreter(sens, interp)
-    # test_controller(sens, interp, con)
+    #test_controller(sens, interp, con)
 
     move_forward()
 
