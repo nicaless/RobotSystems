@@ -289,7 +289,7 @@ class Controller:
     def turn_to_line(self, rel_line_pos, scale=None):
         if rel_line_pos is None:
             self.pi.stop()
-            return 0
+            return None
         scale = self.scale if scale is None else scale
         steering_angle = rel_line_pos * scale
         self.pi.set_dir_servo_angle(steering_angle)

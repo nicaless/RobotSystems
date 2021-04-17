@@ -1,6 +1,6 @@
 from picarx_class import Controller, Interpreter, PiCarX, Sensor
 
-def move_forward(sensitivity=10, polarity=1, target=500, speed=20, delay=1000):
+def move_forward(sensitivity=10, polarity=1, target=500, speed=10, delay=1000):
     pi = PiCarX()
     sens = Sensor()
     interp = Interpreter(sensitivity=sensitivity,
@@ -11,7 +11,11 @@ def move_forward(sensitivity=10, polarity=1, target=500, speed=20, delay=1000):
         adc_values = sens.get_adc_values()
         rel_line_pos = interp.relative_line_position(adc_values,
                                                      target=target)
+        print(rel_line_pos)
         steer_angle = con.turn_to_line(rel_line_pos)
+        print(steer_angle)
+        if steer_angle is None:
+            break
         pi.forward(speed, turn_angle=steer_angle)
         pi.delay(delay)
 
