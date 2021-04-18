@@ -1,19 +1,29 @@
-from picarx_class import Controller, Interpreter, PiCarX, Sensor
+import cv2
+import numpy as np
+from picarx_class import ColorInterpreter, Controller, GreyScaleInterpreter, \
+    PiCarX, Sensor
 
-def move_forward(sensitivity=10, polarity=1, target=500, speed=1, delay=20):
+def move_forward(sensor_type='greyscale', sensitivity=10, polarity=1,
+                 target=500, speed=1, delay=20):
     pi = PiCarX()
     sens = Sensor()
-    interp = Interpreter(sensitivity=sensitivity,
-                             polarity=polarity)
+    if sensor_type == 'greyscale':
+        interp = GreyScaleInterpreter(sensitivity=sensitivity,
+                                      polarity=polarity)
+    else:
+        interp = ColorInterpreter()
     con = Controller(pi)
 
     while True:
-        adc_values = sens.get_adc_values()
-        rel_line_pos = interp.relative_line_position(adc_values,
-                                                     target=target)
-        print(rel_line_pos)
-        steer_angle = con.turn_to_line(rel_line_pos)
-        print(steer_angle)
+        # TODO: sample multiple values before commanding controller
+        sensor_values = sens.get_sensor_reading(sensor_type=sensor_type)
+        if sensor_type == 'greyscale':
+            rel_line_pos = interp.relative_line_position(sensor_values,
+                                                         target=target)
+            steer_angle = con.turn_to_line(rel_line_pos)
+        else:
+            steer_angle = interp.steering_angle(sensor_values)
+            steer_angle = con.turn_to_angle(steer_angle, scale=1)
         if steer_angle is None:
             break
         pi.forward(speed, turn_angle=steer_angle)
@@ -39,15 +49,13 @@ def test_controller(sens, interp, con):
 
 
 if __name__ == "__main__":
-    pi = PiCarX(logging_on=True)
-    sens = Sensor(logging_on=True)
-    interp = Interpreter(sensitivity=10, logging_on=True)
-    con = Controller(pi, scale=30, logging_on=True)
-
-    #test_sensor(sens)
-    #test_interpreter(sens, interp)
-    #test_controller(sens, interp, con)
+    # pi = PiCarX(logging_on=True)
+    # sens = Sensor(logging_on=True)
+    # interp = GreyScaleInterpreter(sensitivity=10, logging_on=True)
+    # con = Controller(pi, scale=30, logging_on=True)
+    #
+    # test_sensor(sens)
+    # test_interpreter(sens, interp)
+    # test_controller(sens, interp, con)
 
     move_forward()
-
-
