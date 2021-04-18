@@ -1,14 +1,12 @@
-import cv2
-import numpy as np
-from picarx_class import ColorInterpreter, Controller, GreyScaleInterpreter, \
-    PiCarX, Sensor
+from picarx_class import ColorInterpreter, Controller, \
+    PhotoSensorInterpreter, PiCarX, Sensor
 
-def move_forward(sensor_type='greyscale', sensitivity=10, polarity=1,
+def move_forward(sensor_type='photosensor', sensitivity=10, polarity=1,
                  target=500, speed=1, delay=20):
     pi = PiCarX()
     sens = Sensor()
-    if sensor_type == 'greyscale':
-        interp = GreyScaleInterpreter(sensitivity=sensitivity,
+    if sensor_type == 'photosensor':
+        interp = PhotoSensorInterpreter(sensitivity=sensitivity,
                                       polarity=polarity)
     else:
         interp = ColorInterpreter()
@@ -17,7 +15,7 @@ def move_forward(sensor_type='greyscale', sensitivity=10, polarity=1,
     while True:
         # TODO: sample multiple values before commanding controller
         sensor_values = sens.get_sensor_reading(sensor_type=sensor_type)
-        if sensor_type == 'greyscale':
+        if sensor_type == 'photosensor':
             rel_line_pos = interp.relative_line_position(sensor_values,
                                                          target=target)
             steer_angle = con.turn_to_line(rel_line_pos)

@@ -186,14 +186,14 @@ class Sensor:
         _, frame = self.cam.read()
         return frame
 
-    def get_sensor_reading(self, sensor_type='greyscale'):
-        if sensor_type == 'greyscale':
+    def get_sensor_reading(self, sensor_type='photosensor'):
+        if sensor_type == 'photosensor':
             return self.get_adc_values()
         else:
              return self.get_camera_frame()
 
 
-class GreyScaleInterpreter:
+class PhotoSensorInterpreter:
     def __init__(self, sensitivity=50, polarity=1, logging_on=False):
         '''
 
