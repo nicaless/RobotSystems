@@ -1,5 +1,8 @@
-from picarx_class import ColorInterpreter, Controller, \
-    PhotoSensorInterpreter, PiCarX, Sensor
+from controller_class import Controller
+from interpreter_class import ColorInterpreter, PhotoSensorInterpreter
+from picarx_class import PiCarX
+from sensor_class import Sensor
+
 
 def move_forward(sensor_type='photosensor', sensitivity=10, polarity=1,
                  target=500, speed=1, delay=20):
