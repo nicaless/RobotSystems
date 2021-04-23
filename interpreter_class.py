@@ -1,3 +1,11 @@
+"""
+interpreter_class.py
+Written Nicole Fronda - April 2021
+
+Defines Interpreter classes to processes PiCarX different sensor readings
+provided by the Sensor class
+"""
+
 import cv2
 import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
@@ -27,11 +35,12 @@ class PhotoSensorInterpreter:
     def __init__(self, sensitivity=50, polarity=1, target=300,
                  logging_on=False):
         '''
-
+        Interpreter for Photosensor readings
         :param sensitivity: fine tune difference between line and floor
         :param polarity: [-1, 1],
             1 is line is darker than floor (or floor is really light colored)
             -1 is line is lighter than floor (or floor is really dark colored)
+        :param target: int, ADV value of target
         '''
 
         self.logging = logging_on
@@ -55,16 +64,14 @@ class PhotoSensorInterpreter:
     @log_on_start(logging.DEBUG, "BEGIN Interpreter.relative_line_position")
     @log_on_end(logging.DEBUG, "END Interpreter.relative_line_position")
     @log_on_error(logging.ERROR, "ERROR Interpreter.relative_line_position {e!r}")
-    def relative_line_position(self, adv_values):
+    def relative_line_position(self, adc_values):
         '''
-        get direction to turn towards, scaled by line offset,
-        line offset is avg % difference from target of
-        channels with sighted target
+        Gets position of the line relative to the PiCar given adv readings
 
-        :param adv_values: from sensor object
-        :return:
+        :param adc_values: from sensor object
+        :return: relative direction to turn
         '''
-        target_locs = self._find_target(adv_values, self.target)
+        target_locs = self._find_target(adc_values, self.target)
         if target_locs == [0, 1, 0] or target_locs == [1, 1, 1]:
             direction = 0
         elif target_locs == [1, 0, 0] or target_locs == [1, 1, 0]:
@@ -75,14 +82,26 @@ class PhotoSensorInterpreter:
             return None
 
         diffs = []
-        for i, v in enumerate(adv_values):
+        # for channels that have target in sight,
+        # get difference of adv reading and target adv value
+        for i, v in enumerate(adc_values):
             if target_locs[i] == 1:
                 diffs.append(abs(self.target - v) / self.sensitivity)
+        # relative offset is the average of reading differences
         offset = min(1, sum(diffs) / len(diffs))
 
         return direction * offset
 
     def consume_sensor_produce_control(self, sensor_bus, control_bus, delay):
+        '''
+        Reads sensor data from sensor_bus, processes data,
+        then writes to control bus, at delay intervals
+
+        :param sensor_bus: Bus object, the bus to read sensor data from
+        :param control_bus: Bus object, the bus to write processed data to
+        :param delay: int, seconds between processing
+        :return: None
+        '''
         lock = Lock()
         while True:
             time.sleep(delay)
@@ -92,16 +111,29 @@ class PhotoSensorInterpreter:
             control_bus.write(rel_line_pos)
 
     @log_on_error(logging.ERROR, "ERROR Interpreter._find_target {e!r}")
-    def _find_target(self, adv_values, target):
-        left = self._sensor_sees_target(self.LEFT, adv_values, target)
-        mid = self._sensor_sees_target(self.MID, adv_values, target)
-        right = self._sensor_sees_target(self.RIGHT, adv_values, target)
+    def _find_target(self, adc_values, target):
+        '''
+        Lists which ADC channels see the target
+        :param adc_values: list, ADC readings for each channel
+        :param target: int, expected ADC value for target
+        :return: binary list, 1 if ADC channel sights target, 0 otherwise
+        '''
+        left = self._sensor_sees_target(self.LEFT, adc_values, target)
+        mid = self._sensor_sees_target(self.MID, adc_values, target)
+        right = self._sensor_sees_target(self.RIGHT, adc_values, target)
         return [left, mid, right]
 
     @log_on_start(logging.DEBUG, "BEGIN Interpreter._sensor_sees_target")
     @log_on_end(logging.DEBUG, "END Interpreter._sensor_sees_target")
     @log_on_error(logging.ERROR, "ERROR Interpreter._sensor_sees_target {e!r}")
     def _sensor_sees_target(self, sensor_id, adv_values, target):
+        """
+        Evaluates whether given ADC sensor can see the target
+        :param sensor_id: the ADC sensor to check
+        :param adv_values: list, ADC readings for each channel
+        :param target: int, expected ADC value for target
+        :return: int, 1 if ADC channel sights target, 0 otherwise
+        """
         if self.polarity == 1:
             # if line is darker than floor, want target value to be higher than
             # measured value
@@ -138,6 +170,12 @@ class ColorInterpreter:
     @log_on_end(logging.DEBUG, "END Interpreter.relative_line_position")
     @log_on_error(logging.ERROR, "ERROR Interpreter.relative_line_position {e!r}")
     def steering_angle(self, frame):
+        """
+        Gets steering_angle to turn towards given current frame
+
+        :param frame: matrix of RGB values
+        :return: int, angle to turn towards
+        """
         lane_lines = self._get_line_segments(frame)
         # return None if no lanes detected
         if len(lane_lines) == 0:
@@ -154,14 +192,34 @@ class ColorInterpreter:
         return steering_angle
 
     def consume_sensor_produce_control(self, sensor_bus, control_bus, delay):
+        """
+        Reads sensor data from sensor_bus, processes data,
+        then writes to control bus, at delay intervals
+
+        :param sensor_bus: Bus object, the bus to read sensor data from
+        :param control_bus: Bus object, the bus to write processed data to
+        :param delay: int, seconds between processing
+        :return: None
+        '''
+        """
         while True:
             time.sleep(delay)
             sensor_reading = sensor_bus.read()
             steering_angle = self.steering_angle(sensor_reading)
             control_bus.write(steering_angle)
+    """
+    The functions below are largely taken from 
+    https://towardsdatascience.com/deeppicar-part-4-lane-following-via-opencv-737dd9e47c96
+    """
 
     @log_on_error(logging.ERROR, "ERROR Interpreter._get_line_segments {e!r}")
     def _get_line_segments(self, frame):
+        """
+        Gets detected line segments from frame
+        :param frame: matrix of RGB values
+        :return: list of line segments
+        """
+        # extract HSV values from RGB values in frame
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         # TODO: move hardcoded values to class constants or parameters
@@ -183,6 +241,7 @@ class ColorInterpreter:
         cv2.fillPoly(fill_mask, polygon, 255)
         cropped_edges = cv2.bitwise_and(edges, fill_mask)
 
+        # Apply Hough transform to edgest to get line segments
         line_segments = cv2.HoughLinesP(cropped_edges, 1, np.pi / 180, 10,
                                         np.array([]), minLineLength=8,
                                         maxLineGap=4)
@@ -191,6 +250,9 @@ class ColorInterpreter:
 
     @log_on_error(logging.ERROR, "ERROR Interpreter._get_line_segments {e!r}")
     def _make_points(self, frame, line):
+        """
+        Creates end points for provided line in the frame
+        """
         height, width, _ = frame.shape
         slope, intercept = line
         y1 = height  # bottom of the frame

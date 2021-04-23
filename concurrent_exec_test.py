@@ -1,3 +1,11 @@
+"""
+concurrency_exec_test.py
+Written Nicole Fronda - April 2021
+
+Script to test the producer-consumer functions in the Sensor, Interpreter,
+and Controller classes.
+"""
+
 import concurrent.futures
 from concurrency import Bus
 from controller_class import Controller

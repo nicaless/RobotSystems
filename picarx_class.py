@@ -1,3 +1,10 @@
+"""
+picarx_class.py
+Written Nicole Fronda - April 2021
+
+Class implementation of simple motor controls for the PiCar
+"""
+
 import atexit
 import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
@@ -56,6 +63,11 @@ class PiCarX:
             pin.period(self._period)
 
     def toggle_logging(self):
+        """
+        Toggles between logging settings DEBUG (for debug messages only)
+        and ERROR (includes ERROR messages)
+        :return: None
+        """
         if self.logging:
             logging.getLogger().setLevel(logging.ERROR)
             self.logging = False
@@ -67,14 +79,21 @@ class PiCarX:
     def delay(ms):
         time.sleep(ms / 1000)
 
-    @log_on_start(logging.DEBUG, "BEGIN cleanup")
-    @log_on_end(logging.DEBUG, "END cleanup")
-    @log_on_error(logging.ERROR, "ERROR backward {e!r}")
     def cleanup(self):
+        """
+        Registered function stop PiCar motors
+        :return: None
+        """
         self.stop()
 
     @log_on_error(logging.ERROR, "ERROR backward {e!r}")
     def backward(self, speed, turn_angle=0):
+        """
+        Drives backwards at given speed and turn_angle
+        :param speed: int, speed at which to drive PiCar
+        :param turn_angle: int, default 0, negative values indicate left turn
+        :return: None
+        """
         if turn_angle == 0:
             self._set_motor_speed(self.LEFT_MOTOR, speed)
             self._set_motor_speed(self.RIGHT_MOTOR, speed)
@@ -92,6 +111,12 @@ class PiCarX:
 
     @log_on_error(logging.ERROR, "ERROR forward {e!r}")
     def forward(self, speed, turn_angle=0):
+        """
+        Drives forwards at given speed and turn_angle
+        :param speed: int, speed at which to drive PiCar
+        :param turn_angle: int, default 0, negative values indicate left turn
+        :return: None
+        """
         if turn_angle == 0:
             self._set_motor_speed(self.LEFT_MOTOR, -1 * speed)
             self._set_motor_speed(self.RIGHT_MOTOR, -1 * speed)
@@ -109,9 +134,17 @@ class PiCarX:
 
     @log_on_error(logging.ERROR, "ERROR stop {e!r}", reraise=True)
     def stop(self):
+        """
+        Stops all motors and resets servo angle to calibration angle
+        :return: None
+        """
         self._set_motor_speed(self.LEFT_MOTOR, 0)
         self._set_motor_speed(self.RIGHT_MOTOR, 0)
         self.set_dir_servo_angle(self._calibration_angle)
+
+    """
+    The functions below are copied from the provided 'picarx.py' script
+    """
 
     def set_dir_servo_angle(self, value):
         self._dir_servo_pin.angle(value + self._dir_cal_value)

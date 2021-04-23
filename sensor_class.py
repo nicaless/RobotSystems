@@ -1,3 +1,10 @@
+"""
+sensor_class.py
+Written Nicole Fronda - April 2021
+
+Produces readings for the sensors on the PiCar
+"""
+
 import cv2
 import logging
 import time
@@ -36,21 +43,42 @@ class Sensor:
             self.logging = True
 
     def get_adc_values(self):
-        # sensor returns high value for lighter value
-        # 200-500 black, 1100-1200 for white
+        """
+        sensor returns high value for lighter value
+        approximately (200-500 black, 1100-1200 for white)
+        :return: list of three ADC values
+        """
         return [adc.read() for adc in self.adc]
 
     def get_camera_frame(self):
+        """
+        Wrapper around camera.read() from cv2 to return current frame
+        :return: frame, matrix of pixel values
+        """
         _, frame = self.cam.read()
         return frame
 
     def get_sensor_reading(self, sensor_type='photosensor'):
+        """
+        Wrapper function to get sensor readings from provided sensor_type,
+        (defaults to photosensor)
+        :param sensor_type: string, the sensor from which to get a reading
+        :return: sensor value
+        """
         if sensor_type == 'photosensor':
             return self.get_adc_values()
         else:
              return self.get_camera_frame()
 
     def produce_readings(self, bus, delay, sensor_type='photosensor'):
+        """
+        Writes sensor readings to a bus at delay intervals
+
+        :param bus: Bus object, the bus to write to
+        :param delay: int, seconds between writes to bus
+        :param sensor_type: string, the sensor from which to get readings
+        :return: None
+        """
         while True:
             time.sleep(delay)
             bus.write(self.get_sensor_reading(sensor_type=sensor_type))

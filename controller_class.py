@@ -1,3 +1,10 @@
+"""
+controller_class.py
+Written Nicole Fronda - April 2021
+
+Moves PiCar along a line given processed data from an Interpreter class
+"""
+
 import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
 import time
@@ -21,6 +28,11 @@ logging.basicConfig(format=logging_format, level=logging.INFO,
 
 class Controller:
     def __init__(self, picarx_obj, scale=10, logging_on=False):
+        """
+        :param picarx_obj: PiCarX object, the PiCar to control
+        :param scale: int, scaling factor for steering angle
+        :param logging_on: bool, whether or not to enable ERROR message logging
+        """
         self.pi = picarx_obj
         self.scale = scale
         self.logging = logging_on
@@ -39,6 +51,15 @@ class Controller:
     @log_on_end(logging.DEBUG, "END Controller.turn_to_line")
     @log_on_error(logging.ERROR, "ERROR Controller.turn_to_line {e!r}")
     def turn_to_line(self, rel_line_pos, scale=None, delay=50):
+        """
+        Given relative line position, turn towards the line
+        :param rel_line_pos: int [-1, 1] relative offset of the
+            line from the PiCar (positive values indicate line is to the right)
+        :param scale: int, scaling factor for steering angle.
+            If None, the class default is used
+        :param delay: int, ms to wait after turning
+        :return: int, steering angle
+        """
         if rel_line_pos is None:
             self.pi.stop()
             return None
@@ -52,6 +73,18 @@ class Controller:
     @log_on_end(logging.DEBUG, "END Controller.turn_to_angle")
     @log_on_error(logging.ERROR, "ERROR Controller.turn_to_angle {e!r}")
     def turn_to_angle(self, angle, scale=None, delay=50):
+        """
+        Given angle of line from center of camera frame, turn towards the line
+        :param angle: int, angle offset of the line from the PiCar center
+            (positive values indicate line is to the right)
+        :param scale: int, scaling factor for steering angle.
+            If None, the class default is used
+        :param delay: int, ms to wait after turning
+        :return: int, steering angle
+        """
+        if angle is None:
+            self.pi.stop()
+            return None
         scale = self.scale if scale is None else scale
         steering_angle = angle * scale
         self.pi.set_dir_servo_angle(steering_angle)
@@ -59,6 +92,15 @@ class Controller:
         return steering_angle
 
     def consume_control_input(self, bus, delay, **kwargs):
+        """
+        Reads control input readings from a bus at delay intervals.
+        Acts upon the readings depending on the type of reading.
+
+        :param bus: Bus object, the bus to read from
+        :param delay: Bus object, the bus to write to
+        :param kwargs: Any other optional args for control functions
+        :return: int, steering angle
+        """
         while True:
             time.sleep(delay)
             control_input = bus.read()
