@@ -11,7 +11,6 @@ import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
 import math
 import numpy as np
-from threading import Lock
 import time
 
 try:
@@ -102,11 +101,9 @@ class PhotoSensorInterpreter:
         :param delay: int, seconds between processing
         :return: None
         '''
-        lock = Lock()
         while True:
             time.sleep(delay)
-            with lock:
-                sensor_reading = sensor_bus.read()
+            sensor_reading = sensor_bus.read()
             rel_line_pos = self.relative_line_position(sensor_reading)
             control_bus.write(rel_line_pos)
 
