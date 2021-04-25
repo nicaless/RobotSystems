@@ -7,6 +7,7 @@ Produces readings for the sensors on the PiCar
 
 import cv2
 import logging
+from threading import Lock
 import time
 
 try:
@@ -79,6 +80,8 @@ class Sensor:
         :param sensor_type: string, the sensor from which to get readings
         :return: None
         """
+        lock = Lock()
         while True:
             time.sleep(delay)
-            bus.write(self.get_sensor_reading(sensor_type=sensor_type))
+            with lock:
+                bus.write(self.get_sensor_reading(sensor_type=sensor_type))

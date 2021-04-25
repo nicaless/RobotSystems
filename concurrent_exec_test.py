@@ -21,27 +21,29 @@ sensor_bus = Bus('sensor')
 sensor_delay = 1
 
 interp = PhotoSensorInterpreter(logging_on=True)
-interp_delay = 1
+interp_delay = 2
 
 con = Controller(pi, logging_on=True)
 control_bus = Bus('rel_line_pos')
-con_delay = 1
-
+speed = 1
+con_delay = 2
 
 def test_thread(bus):
-    time.delay(2)
+    time.sleep(3)
     read_values = []
-    for i in range(10):
-        read_values.append(bus.read())
+    for i in range(5):
+        time.sleep(3)
+        read_values.append(bus.message[0])
     print(read_values)
 
+def main():
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        eSensor = executor.submit(sens.produce_readings, sensor_bus, sensor_delay, sensor_type='photosensor')
+        eSensorTest = executor.submit(test_thread, sensor_bus)
+        eInterpreter = executor.submit(interp.consume_sensor_produce_control, sensor_bus, control_bus, interp_delay)
+        eInterpTest = executor.submit(test_thread, control_bus)
+        eController = executor.submit(con.consume_control_input, control_bus, con_delay, speed)
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-    eSensor = executor.submit(sens.produce_readings, sensor_bus, sensor_delay)
-    eSensorTest = executor.submit(test_thread, sensor_bus)
-    #eInterpreter = executor.submit(interp.consume_sensor_produce_control,
-    #                               sensor_bus, control_bus, interp_delay)
-    #eController = executor.submit(con.consume_control_input,
-    #                              control_bus, con_delay)
-    #print(eInterpreter.result())
-    #print(eController.result())
+if __name__ == '__main__':
+    main()
+
