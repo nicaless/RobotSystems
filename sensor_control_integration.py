@@ -5,22 +5,21 @@ from sensor_class import Sensor
 
 
 def move_forward(sensor_type='photosensor', sensitivity=10, polarity=1,
-                 target=500, speed=1, delay=20):
-    pi = PiCarX()
-    sens = Sensor()
+                 target=300, speed=1, delay=20):
+    pi = PiCarX(logging_on=True)
+    sens = Sensor(logging_on=True)
     if sensor_type == 'photosensor':
         interp = PhotoSensorInterpreter(sensitivity=sensitivity,
-                                      polarity=polarity)
+                                      polarity=polarity, target=target, logging_on=True)
     else:
-        interp = ColorInterpreter()
-    con = Controller(pi)
+        interp = ColorInterpreter(logging_on=True)
+    con = Controller(pi, logging_on=True)
 
     while True:
         # TODO: sample multiple values before commanding controller
         sensor_values = sens.get_sensor_reading(sensor_type=sensor_type)
         if sensor_type == 'photosensor':
-            rel_line_pos = interp.relative_line_position(sensor_values,
-                                                         target=target)
+            rel_line_pos = interp.relative_line_position(sensor_values)
             steer_angle = con.turn_to_line(rel_line_pos)
         else:
             steer_angle = interp.steering_angle(sensor_values)
@@ -38,13 +37,13 @@ def test_sensor(sensor):
 def test_interpreter(sens, interp):
     for i in range(10):
         adc_values = sens.get_adc_values()
-        print(interp._find_target(adc_values, 500))
-        print(interp.relative_line_position(adc_values, 500))
+        print(interp._find_target(adc_values, 300))
+        print(interp.relative_line_position(adc_values))
 
 def test_controller(sens, interp, con):
     adc_values = sens.get_adc_values()
     print(adc_values)
-    rel_line_pos = interp.relative_line_position(adc_values, 500)
+    rel_line_pos = interp.relative_line_position(adc_values)
     print(rel_line_pos)
     con.turn_to_line(rel_line_pos)
 
@@ -52,11 +51,9 @@ def test_controller(sens, interp, con):
 if __name__ == "__main__":
     # pi = PiCarX(logging_on=True)
     # sens = Sensor(logging_on=True)
-    # interp = GreyScaleInterpreter(sensitivity=10, logging_on=True)
+    # interp = PhotoSensorInterpreter(sensitivity=10, logging_on=True)
     # con = Controller(pi, scale=30, logging_on=True)
-    #
     # test_sensor(sens)
     # test_interpreter(sens, interp)
-    # test_controller(sens, interp, con)
-
+    #test_controller(sens, interp, con)
     move_forward()
