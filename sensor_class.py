@@ -84,4 +84,5 @@ class Sensor:
         while True:
             time.sleep(delay)
             with lock:
-                bus.write(self.get_sensor_reading(sensor_type=sensor_type))
+                readings = self.get_sensor_reading(sensor_type=sensor_type)
+            bus.write(readings)
