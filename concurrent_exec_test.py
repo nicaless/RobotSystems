@@ -12,6 +12,7 @@ from controller_class import Controller
 from interpreter_class import PhotoSensorInterpreter
 from picarx_class import PiCarX
 from sensor_class import Sensor
+import time
 
 pi = PiCarX(logging_on=True)
 
@@ -27,12 +28,20 @@ control_bus = Bus('rel_line_pos')
 con_delay = 1
 
 
+def test_thread(bus):
+    time.delay(2)
+    read_values = []
+    for i in range(10):
+        read_values.append(bus.read())
+    print(read_values)
+
+
 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
     eSensor = executor.submit(sens.produce_readings, sensor_bus, sensor_delay)
+    eSensorTest = executor.submit(test_thread, sensor_bus)
     #eInterpreter = executor.submit(interp.consume_sensor_produce_control,
     #                               sensor_bus, control_bus, interp_delay)
     #eController = executor.submit(con.consume_control_input,
     #                              control_bus, con_delay)
     #print(eInterpreter.result())
     #print(eController.result())
-print(Bus.message)

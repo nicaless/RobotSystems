@@ -91,7 +91,7 @@ class Controller:
         self.pi.delay(delay)
         return steering_angle
 
-    def consume_control_input(self, bus, delay, **kwargs):
+    def consume_control_input(self, bus, delay, speed, **kwargs):
         """
         Reads control input readings from a bus at delay intervals.
         Acts upon the readings depending on the type of reading.
@@ -107,6 +107,8 @@ class Controller:
             if control_input is None:
                 pass
             if bus.message_type == 'rel_line_pos':
-                return self.turn_to_line(control_input, **kwargs)
+                steer_angle = self.turn_to_line(control_input, **kwargs)
+                self.pi.forward(speed, turn_angle=steer_angle)
             else:
-                return self.turn_to_angle(control_input, **kwargs)
+                steer_angle = self.turn_to_angle(control_input, **kwargs)
+                self.pi.forward(speed, turn_angle=steer_angle)

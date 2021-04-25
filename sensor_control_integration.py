@@ -10,7 +10,8 @@ def move_forward(sensor_type='photosensor', sensitivity=10, polarity=1,
     sens = Sensor(logging_on=True)
     if sensor_type == 'photosensor':
         interp = PhotoSensorInterpreter(sensitivity=sensitivity,
-                                      polarity=polarity, target=target, logging_on=True)
+                                        polarity=polarity, target=target,
+                                        logging_on=True)
     else:
         interp = ColorInterpreter(logging_on=True)
     con = Controller(pi, logging_on=True)
@@ -55,5 +56,5 @@ if __name__ == "__main__":
     # con = Controller(pi, scale=30, logging_on=True)
     # test_sensor(sens)
     # test_interpreter(sens, interp)
-    #test_controller(sens, interp, con)
+    # test_controller(sens, interp, con)
     move_forward()
