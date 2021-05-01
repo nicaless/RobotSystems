@@ -10,6 +10,7 @@ import logging
 from threading import Lock
 import time
 
+
 try:
     from ezblock import ADC
     from ezblock import __reset_mcu__

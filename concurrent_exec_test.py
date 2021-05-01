@@ -6,44 +6,71 @@ Script to test the producer-consumer functions in the Sensor, Interpreter,
 and Controller classes.
 """
 
-import concurrent.futures
-from concurrency import Bus
+from rossros import Bus, ConsumerProducer, Printer, Producer, \
+    runConcurrently, Timer
 from controller_class import Controller
 from interpreter_class import PhotoSensorInterpreter
 from picarx_class import PiCarX
 from sensor_class import Sensor
-import time
 
 pi = PiCarX(logging_on=True)
 
+### SET UP TIMER
+timer_bus = Bus(name='timer bus')
+timer = Timer(timer_bus)
+
+
+### SET UP GREYSCALE SENSOR AS A PRODUCER
 sens = Sensor(logging_on=True)
-sensor_bus = Bus('sensor')
-sensor_delay = 1
+sensor_bus = Bus(name='sensor bus')
+sensor_producer = Producer(sens.get_adc_values,
+                           sensor_bus,
+                           delay=1,
+                           termination_busses=timer_bus,
+                           name='sensor producer')
 
+
+### SET UP INTERPRETER AS CONSUMER-PRODUCER
 interp = PhotoSensorInterpreter(logging_on=True)
-interp_delay = 2
+interp_bus = Bus(name='interpreter bus')
+interp_con_prod = ConsumerProducer(interp.relative_line_position,
+                                   sensor_bus,
+                                   interp_bus,
+                                   delay=1,
+                                   termination_busses=timer_bus,
+                                   name='interpreter consumer-producer')
 
-con = Controller(pi, logging_on=True)
-control_bus = Bus('rel_line_pos')
-speed = 1
-con_delay = 2
 
-def test_thread(bus):
-    time.sleep(3)
-    read_values = []
-    for i in range(5):
-        time.sleep(3)
-        read_values.append(bus.message[0])
-    print(read_values)
+### SET UP CONTROLLER AS CONSUMER
+controller = Controller(pi, logging_on=True)
+control_bus = Bus(name='controller bus')
+controller_con_prod = ConsumerProducer(controller.turn_to_line,
+                                       interp_bus,
+                                       control_bus,
+                                       delay=1,
+                                       termination_busses=timer_bus,
+                                       name='controller consumer-producer')
 
-def main():
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        eSensor = executor.submit(sens.produce_readings, sensor_bus, sensor_delay, sensor_type='photosensor')
-        eSensorTest = executor.submit(test_thread, sensor_bus)
-        eInterpreter = executor.submit(interp.consume_sensor_produce_control, sensor_bus, control_bus, interp_delay)
-        eInterpTest = executor.submit(test_thread, control_bus)
-        eController = executor.submit(con.consume_control_input, control_bus, con_delay, speed)
+
+### SET UP PRINTERS
+sensor_printer = Printer(sensor_bus,
+                         termination_busses=timer_bus,
+                         name='sensor printer',
+                         print_prefix='sensor values: ')
+interp_printer = Printer(interp_bus,
+                         termination_busses=timer_bus,
+                         name='interpreter printer',
+                         print_prefix='interpreter values: ')
+controller_printer = Printer(control_bus,
+                             termination_busses=timer_bus,
+                             name='controller printer',
+                             print_prefix='controller values: ')
+
+producer_consumer_list = [timer,
+                          sensor_producer,
+                          interp_con_prod,
+                          controller_con_prod]
+
 
 if __name__ == '__main__':
-    main()
-
+    runConcurrently(producer_consumer_list)
