@@ -1,7 +1,13 @@
+"""
+picarx_class.py
+Written Nicole Fronda - April 2021
+
+Class implementation of simple motor controls for the PiCar
+"""
+
 import atexit
 import logging
 from logdecorator import log_on_start, log_on_end, log_on_error
-import time
 
 try:
     from ezblock import *
@@ -42,10 +48,6 @@ class PiCarX:
         self._left_rear_dir_pin = Pin("D4")
         self._right_rear_dir_pin = Pin("D5")
 
-        self._S0 = ADC('A0')
-        self._S1 = ADC('A1')
-        self._S2 = ADC('A2')
-
         self._Servo_dir_flag = 1
         self._dir_cal_value = 0
         self._cam_cal_value_1 = 0
@@ -61,6 +63,11 @@ class PiCarX:
             pin.period(self._period)
 
     def toggle_logging(self):
+        """
+        Toggles between logging settings DEBUG (for debug messages only)
+        and ERROR (includes ERROR messages)
+        :return: None
+        """
         if self.logging:
             logging.getLogger().setLevel(logging.ERROR)
             self.logging = False
@@ -72,14 +79,21 @@ class PiCarX:
     def delay(ms):
         time.sleep(ms / 1000)
 
-    @log_on_start(logging.DEBUG, "BEGIN cleanup")
-    @log_on_end(logging.DEBUG, "END cleanup")
-    @log_on_error(logging.ERROR, "ERROR backward {e!r}")
     def cleanup(self):
+        """
+        Registered function stop PiCar motors
+        :return: None
+        """
         self.stop()
 
     @log_on_error(logging.ERROR, "ERROR backward {e!r}")
     def backward(self, speed, turn_angle=0):
+        """
+        Drives backwards at given speed and turn_angle
+        :param speed: int, speed at which to drive PiCar
+        :param turn_angle: int, default 0, negative values indicate left turn
+        :return: None
+        """
         if turn_angle == 0:
             self._set_motor_speed(self.LEFT_MOTOR, speed)
             self._set_motor_speed(self.RIGHT_MOTOR, speed)
@@ -89,14 +103,20 @@ class PiCarX:
             vehicle_width = self._vehicle_width
             v2 = v1 * (r / vehicle_width + 1) / (r / vehicle_width - 1)
             if turn_angle > 0:
-                self._set_motor_speed(self.LEFT_MOTOR, -1 * max([v1, v2]))
-                self._set_motor_speed(self.RIGHT_MOTOR, -1 * min([v1, v2]))
+                self._set_motor_speed(self.LEFT_MOTOR, max([v1, v2]))
+                self._set_motor_speed(self.RIGHT_MOTOR, min([v1, v2]))
             else:
-                self._set_motor_speed(self.RIGHT_MOTOR, -1 * max([v1, v2]))
-                self._set_motor_speed(self.LEFT_MOTOR, -1 * min([v1, v2]))
+                self._set_motor_speed(self.RIGHT_MOTOR, max([v1, v2]))
+                self._set_motor_speed(self.LEFT_MOTOR, min([v1, v2]))
 
     @log_on_error(logging.ERROR, "ERROR forward {e!r}")
     def forward(self, speed, turn_angle=0):
+        """
+        Drives forwards at given speed and turn_angle
+        :param speed: int, speed at which to drive PiCar
+        :param turn_angle: int, default 0, negative values indicate left turn
+        :return: None
+        """
         if turn_angle == 0:
             self._set_motor_speed(self.LEFT_MOTOR, -1 * speed)
             self._set_motor_speed(self.RIGHT_MOTOR, -1 * speed)
@@ -114,9 +134,24 @@ class PiCarX:
 
     @log_on_error(logging.ERROR, "ERROR stop {e!r}", reraise=True)
     def stop(self):
+        """
+        Stops all motors and resets servo angle to calibration angle
+        :return: None
+        """
         self._set_motor_speed(self.LEFT_MOTOR, 0)
         self._set_motor_speed(self.RIGHT_MOTOR, 0)
-        self._set_dir_servo_angle(self._calibration_angle)
+        self.set_dir_servo_angle(self._calibration_angle)
+
+    """
+    The functions below are copied from the provided 'picarx.py' script
+    """
+
+    def set_dir_servo_angle(self, value):
+        self._dir_servo_pin.angle(value + self._dir_cal_value)
+
+    def _dir_servo_angle_calibration(self, value):
+        self._dir_cal_value = value
+        self.set_dir_servo_angle(self._dir_cal_value)
 
     def _set_motor_speed(self, motor, speed):
         if speed >= 0:
@@ -150,13 +185,6 @@ class PiCarX:
         # 1: negative direction
         if value == 1:
             self._cali_dir_value[motor] = -1 * self._cali_dir_value[motor]
-
-    def _dir_servo_angle_calibration(self, value):
-        self._dir_cal_value = value
-        self._set_dir_servo_angle(self._dir_cal_value)
-
-    def _set_dir_servo_angle(self, value):
-        self._dir_servo_pin.angle(value + self._dir_cal_value)
 
     def _set_power(self, speed):
         self._set_motor_speed(self.LEFT_MOTOR, speed)
