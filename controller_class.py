@@ -91,21 +91,69 @@ class Controller:
         self.pi.delay(delay)
         return steering_angle
 
-    def consume_control_input(self, bus, delay, speed, **kwargs):
+
+    @log_on_start(logging.DEBUG, "BEGIN Controller.turn_to_angle")
+    @log_on_end(logging.DEBUG, "END Controller.turn_to_angle")
+    @log_on_error(logging.ERROR, "ERROR Controller.turn_to_angle {e!r}")
+    def turn_to_angle(self, angle, scale=None, delay=50):
+        """
+        Given angle of line from center of camera frame, turn towards the line
+        :param angle: int, angle offset of the line from the PiCar center
+            (positive values indicate line is to the right)
+        :param scale: int, scaling factor for steering angle.
+            If None, the class default is used
+        :param delay: int, ms to wait after turning
+        :return: int, steering angle
+        """
+        if angle is None:
+            self.pi.stop()
+            return None
+        scale = self.scale if scale is None else scale
+        steering_angle = angle * scale
+        self.pi.set_dir_servo_angle(steering_angle)
+        self.pi.delay(delay)
+        return steering_angle
+
+    @log_on_start(logging.DEBUG, "BEGIN Controller.safety_stop")
+    @log_on_end(logging.DEBUG, "END Controller.safety_stop")
+    @log_on_error(logging.ERROR, "ERROR Controller.safety_stop {e!r}")
+    def safety_stop(self, obstacle_message, scale=None, delay=50):
+        """
+        Given angle of line from center of camera frame, turn towards the line
+        :param angle: int, angle offset of the line from the PiCar center
+            (positive values indicate line is to the right)
+        :param scale: int, scaling factor for steering angle.
+            If None, the class default is used
+        :param delay: int, ms to wait after turning
+        :return: int, steering angle
+        """
+        if obstacle_message == 'STOP':
+            self.pi.stop()
+            self.pi.delay(delay)
+            False
+        return True
+
+
+    @log_on_start(logging.DEBUG, "BEGIN Controller.turn_to_angle")
+    @log_on_end(logging.DEBUG, "END Controller.turn_to_angle")
+    @log_on_error(logging.ERROR, "ERROR Controller.turn_to_angle {e!r}")
+    def consume_control_input(self, bus, loop_delay, speed, **kwargs):
         """
         Reads control input readings from a bus at delay intervals.
         Acts upon the readings depending on the type of reading.
 
         :param bus: Bus object, the bus to read from
-        :param delay: Bus object, the bus to write to
+        :param loop_delay: delay for loop
         :param kwargs: Any other optional args for control functions
         :return: int, steering angle
         """
         while True:
-            time.sleep(delay)
+            time.sleep(loop_delay)
             control_input = bus.read()
             if control_input is None:
                 pass
+            if control_input == 'STOP':
+                self.pi.stop()
             if bus.message_type == 'rel_line_pos':
                 steer_angle = self.turn_to_line(control_input, **kwargs)
                 self.pi.forward(speed, turn_angle=steer_angle)

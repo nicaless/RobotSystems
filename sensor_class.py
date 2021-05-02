@@ -31,6 +31,8 @@ logging.basicConfig(format=logging_format, level=logging.INFO,
 class Sensor:
     def __init__(self, logging_on=False):
         self.adc = [ADC('A0'), ADC('A1'), ADC('A2')]
+        self.ultrasonic_trig = Pin('D0')
+        self.ultrasonic_echo = Pin('D1')
         self.logging = logging_on
         self.cam = cv2.VideoCapture(0)
         if self.logging:
@@ -52,6 +54,39 @@ class Sensor:
         """
         return [adc.read() for adc in self.adc]
 
+    def get_collision_distance(self, timeout=0.02):
+        """
+        returns distance of closest object using ultrasonic sensor
+
+        code largely taken from ezblock/modules.py
+
+        :return: int, distance in cm from closest object ahead
+        """
+        # trig step (not entirely sure the purpose of this step, to initiate the reading?)
+        self.ultrasonic_trig.low()
+        time.sleep(0.01)
+        self.ultrasonic_trig.high()
+        time.sleep(0.00001)
+        self.ultrasonic_trig.low()
+
+        # get pulse measurements using the echo sensor
+        pulse_end = 0
+        pulse_start = 0
+
+        start = time.time()
+        while self.ultrasonic_echo.value() == 0:
+            pulse_start = time.time()
+            if pulse_start - start > timeout:
+                return -1
+        while self.ultrasonic_echo.value() == 1:
+            pulse_end = time.time()
+            if pulse_end - start > timeout:
+                return -1
+        duration = pulse_end - pulse_start
+        cm = round((duration * 340) / 200, 2)
+
+        return cm
+
     def get_camera_frame(self):
         """
         Wrapper around camera.read() from cv2 to return current frame
@@ -69,6 +104,8 @@ class Sensor:
         """
         if sensor_type == 'photosensor':
             return self.get_adc_values()
+        elif sensor_type == 'ultrasonic':
+            return self.get_collision_distance()
         else:
              return self.get_camera_frame()
 
