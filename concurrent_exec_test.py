@@ -6,44 +6,107 @@ Script to test the producer-consumer functions in the Sensor, Interpreter,
 and Controller classes.
 """
 
-import concurrent.futures
-from concurrency import Bus
+from rossros import Bus, ConsumerProducer, Printer, Producer, \
+    runConcurrently, Timer
 from controller_class import Controller
-from interpreter_class import PhotoSensorInterpreter
+from interpreter_class import PhotoSensorInterpreter, UltrasonicInterpreter
 from picarx_class import PiCarX
 from sensor_class import Sensor
-import time
 
 pi = PiCarX(logging_on=True)
 
+### SET UP TIMER
+timer_bus = Bus(name='timer bus')
+timer = Timer(timer_bus, delay=3)
+
+
+### SET UP SENSORS AS PRODUCERS
 sens = Sensor(logging_on=True)
-sensor_bus = Bus('sensor')
-sensor_delay = 1
+photosensor_bus = Bus(name='greyscale sensor bus')
+ultrasonic_bus = Bus(name='greyscale sensor bus')
+photosensor_producer = Producer(sens.get_adc_values,
+                                photosensor_bus,
+                                delay=0,
+                                termination_busses=[timer_bus],
+                                name='photosensor producer')
+ultrasonic_producer = Producer(sens.get_collision_distance,
+                               ultrasonic_bus,
+                               delay=0,
+                               termination_busses=[timer_bus],
+                               name='photosensor producer')
 
-interp = PhotoSensorInterpreter(logging_on=True)
-interp_delay = 2
 
-con = Controller(pi, logging_on=True)
-control_bus = Bus('rel_line_pos')
-speed = 1
-con_delay = 2
+### SET UP INTERPRETERS AS CONSUMER-PRODUCER
+photosensor_interp_bus = Bus(name='photosensor interpreter bus')
+photosensor_interp = PhotoSensorInterpreter(logging_on=True)
+photosensor_con_prod = ConsumerProducer(photosensor_interp.relative_line_position,
+                                        photosensor_bus,
+                                        photosensor_interp_bus,
+                                        delay=1,
+                                        termination_busses=[timer_bus],
+                                        name='photosensor consumer-producer')
 
-def test_thread(bus):
-    time.sleep(3)
-    read_values = []
-    for i in range(5):
-        time.sleep(3)
-        read_values.append(bus.message[0])
-    print(read_values)
+ultrasonic_interp_bus = Bus(name='ultrasonic interpreter bus')
+ultrasonic_interp = UltrasonicInterpreter(logging_on=True)
+ultrasonic_con_prod = ConsumerProducer(ultrasonic_interp.obstacle_check,
+                                        ultrasonic_bus,
+                                        ultrasonic_interp_bus,
+                                        delay=1,
+                                        termination_busses=[timer_bus],
+                                        name='ultrasonic consumer-producer')
 
-def main():
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        eSensor = executor.submit(sens.produce_readings, sensor_bus, sensor_delay, sensor_type='photosensor')
-        eSensorTest = executor.submit(test_thread, sensor_bus)
-        eInterpreter = executor.submit(interp.consume_sensor_produce_control, sensor_bus, control_bus, interp_delay)
-        eInterpTest = executor.submit(test_thread, control_bus)
-        eController = executor.submit(con.consume_control_input, control_bus, con_delay, speed)
+
+### SET UP CONTROLLER AS CONSUMER
+controller = Controller(pi, logging_on=True)
+
+stop_bus = Bus(name='stop bus')
+stop_bus_con_prod = ConsumerProducer(controller.safety_stop,
+                                     ultrasonic_interp,
+                                     stop_bus,
+                                     delay=2,
+                                     termination_busses=[timer_bus],
+                                     name = 'controller consumer-producer for stopping')
+
+control_bus = Bus(name='controller bus')
+controller_con_prod = ConsumerProducer(controller.turn_to_line,
+                                       photosensor_interp_bus,
+                                       control_bus,
+                                       delay=2,
+                                       termination_busses=[timer_bus, stop_bus],
+                                       name='controller consumer-producer')
+
+
+### SET UP PRINTERS
+photosensor_printer = Printer(photosensor_bus,
+                         termination_busses=[timer_bus],
+                         name='sensor printer',
+                         print_prefix='sensor values: ')
+ultrasonic_printer = Printer(ultrasonic_bus,
+                         termination_busses=[timer_bus],
+                         name='interpreter printer',
+                         print_prefix='interpreter values: ')
+controller_printer = Printer(control_bus,
+                             termination_busses=[timer_bus],
+                             name='controller printer',
+                             print_prefix='controller values: ')
+stop_printer = Printer(stop_bus,
+                       termination_busses=[timer_bus],
+                       name='controller printer',
+                       print_prefix='controller values: ')
+
+producer_consumer_list = [timer,
+                          photosensor_producer,
+                          ultrasonic_producer,
+                          photosensor_con_prod,
+                          ultrasonic_con_prod,
+                          stop_bus_con_prod,
+                          controller_con_prod,
+                          photosensor_printer,
+                          ultrasonic_printer,
+                          controller_printer,
+                          stop_printer
+                          ]
+
 
 if __name__ == '__main__':
-    main()
-
+    runConcurrently(producer_consumer_list)
