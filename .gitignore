@@ -1,5 +1,9 @@
-__pycache__
-__pycache__/*
-ezblock/__pycache__
-ezblock/__pycache__/*
+car/__pycache__
+car/__pycache__/*
+car/picar-x/examples/web_control/web_server/__pycache__
+car/picar-x/ezblock/__pycache__
+car/picar-x/examples/web_control/web_server/__pycache__/*
+car/picar-x/ezblock/__pycache__/*
+car/ezblock/__pycache__
+car/ezblock/__pycache__/*
 *.swp
