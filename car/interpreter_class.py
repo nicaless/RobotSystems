@@ -30,6 +30,60 @@ logging.basicConfig(format=logging_format, level=logging.INFO,
 '''END LOGGING SETUP'''
 
 
+STOPPING_DISTANCE = 5  # stopping distance for obstacles
+
+class UltrasonicInterpreter:
+    def __init__(self, delay=500, logging_on=False):
+        '''
+        Interpreter for Ultrasonic readings
+        '''
+
+        self.logging = logging_on
+        if self.logging:
+            self.toggle_logging()
+        self.delay = 500
+
+    def toggle_logging(self):
+        if self.logging:
+            logging.getLogger().setLevel(logging.ERROR)
+            self.logging = False
+        else:
+            logging.getLogger().setLevel(logging.DEBUG)
+            self.logging = True
+
+    @log_on_start(logging.DEBUG, "BEGIN Interpreter.obstacle_check")
+    @log_on_end(logging.DEBUG, "END Interpreter.obstacle_check")
+    @log_on_error(logging.ERROR, "ERROR Interpreter.obstacle_check {e!r}")
+    def obstacle_check(self, collision_distance):
+        '''
+        Gets position of the line relative to the PiCar given adv readings
+
+        :param collision_distance: from sensor object
+        :return: string, 'STOP' if collision distance is less than stopping distance
+            empty string otherwise
+        '''
+        if collision_distance <= STOPPING_DISTANCE:
+            return 'STOP'
+
+        return ''
+
+    def consume_sensor_produce_control(self, sensor_bus, control_bus, delay=500):
+        '''
+        Reads sensor data from sensor_bus, processes data,
+        then writes to control bus, at delay intervals
+
+        :param sensor_bus: Bus object, the bus to read sensor data from
+        :param control_bus: Bus object, the bus to write processed data to
+        :param delay: int, seconds between processing
+        :return: None
+        '''
+        while True:
+            time.sleep(delay)
+            sensor_reading = sensor_bus.read()
+            distance = self.obstacle_check(sensor_reading)
+            control_bus.write(distance)
+
+
 class PhotoSensorInterpreter:
     def __init__(self, sensitivity=50, polarity=1, target=300,
                  logging_on=False):
