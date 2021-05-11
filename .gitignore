@@ -1,3 +1,4 @@
+.idea
 car/__pycache__
 car/__pycache__/*
 car/picar-x/examples/web_control/web_server/__pycache__
