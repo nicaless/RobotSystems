@@ -6,8 +6,8 @@ import cv2
 import time
 import Camera
 import threading
-from LABConfig import *
-from ArmIK.Transform import *
+from LABConfig import color_range  # imports configured masks for the block colors
+from ArmIK.Transform import *  # includes getCenter, convertCoordinate, getROI, getMaskROI (used for perception task)
 from ArmIK.ArmMoveIK import *
 import HiwonderSDK.Board as Board
 from CameraCalibration.CalibrationConfig import *
@@ -290,6 +290,8 @@ th.start()
 t1 = 0
 roi = ()
 last_x, last_y = 0, 0
+
+# PERCEPTION CODE
 def run(img):
     global roi
     global rect
@@ -308,7 +310,7 @@ def run(img):
     global start_count_t1, t1
     global start_pick_up, first_move
 
-    
+    # MAKE COPY OF FRAME AND DRAW CROSSHAIRS ON FRAME
     img_copy = img.copy()
     img_h, img_w = img.shape[:2]
     cv2.line(img, (0, int(img_h / 2)), (img_w, int(img_h / 2)), (0, 0, 200), 1)
@@ -316,21 +318,24 @@ def run(img):
     
     if not __isRunning:
         return img
-     
+
+    # RESIZE IMAGE, REDUCE IMAGE NOISE AND DETAIL TO ENABLE DETECTION
     frame_resize = cv2.resize(img_copy, size, interpolation=cv2.INTER_NEAREST)
     frame_gb = cv2.GaussianBlur(frame_resize, (11, 11), 11)
     # If an area with a recognized object is is detected, the area will be detected until there is no such object
+    # AKA IF WE ALREADY HAVE AN ROI, BLACK OUT THE NEW FRAME EXCEPT FOR THE ROI
     if get_roi and start_pick_up:
         get_roi = False
         frame_gb = getMaskROI(frame_gb, roi, size)    
     
-    frame_lab = cv2.cvtColor(frame_gb, cv2.COLOR_BGR2LAB)  # 将图像转换到LAB空间
+    frame_lab = cv2.cvtColor(frame_gb, cv2.COLOR_BGR2LAB)  # convert the image to LAB space
     
     area_max = 0
     areaMaxContour = 0
-    if not start_pick_up:
-        for i in color_range:
-            if i in __target_color:
+    if not start_pick_up:  # HAVE NOT STARTED PICKING UP ANYTHING
+        for i in color_range:  # FOR ALL LAB CONFIGURED COLORS
+            if i in __target_color:  # BUT ONLY FOR THE ACTUAL COLOR OF INTEREST
+                # GET MAXIMUM CONTOUR FOR THE COLOR OF INTEREST (aka finding area where the greatest amount of the target color is detected)
                 detect_color = i
                 # mathematical operation on the original image and mask (create mask on the color?)
                 frame_mask = cv2.inRange(frame_lab, color_range[detect_color][0], color_range[detect_color][1])
@@ -338,17 +343,22 @@ def run(img):
                 closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, np.ones((6, 6), np.uint8))  # Closing (morphology)
                 contours = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2] # find countour
                 areaMaxContour, area_max = getAreaMaxContour(contours)  # find the maximum countour
+
+        # IF AREA OF MAXIMUM CONTOUR MATCHES THE SIZE OF THE BLOCK
         if area_max > 2500:  # find the maximum area
+            # SET THE REGION OF INTEREST (ROI) TO THAT CONTOUR
             rect = cv2.minAreaRect(areaMaxContour)
             box = np.int0(cv2.boxPoints(rect))
 
+            # UPDATE THE GLOBAL STATE TO REFLECT THAT WE ARE IN PICKUP MODE NOW (aka continue detecting object until it's gone)
             roi = getROI(box) # get roi zone
             get_roi = True
 
+            # GET THE CENTER OF THAT REGION OF INTEREST
             img_centerx, img_centery = getCenter(rect, roi, size, square_length)  # get the center coordinates of block
             world_x, world_y = convertCoordinate(img_centerx, img_centery, size) # convert to world coordinates
             
-            
+            # DRAW A BOX AROUND THE ROI AND DISPLAY THE REAL WORLD COORDINATES
             cv2.drawContours(img, [box], -1, range_rgb[detect_color], 2)
             cv2.putText(img, '(' + str(world_x) + ',' + str(world_y) + ')', (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, range_rgb[detect_color], 1) # draw center position
@@ -357,8 +367,9 @@ def run(img):
             track = True
             #print(count,distance)
             # cumulative judgment
-            if action_finish:
+            if action_finish:  # IF READY TO START MOVING AGAIN
                 if distance < 0.3:
+                    # WHEN CLOSE ENOUGH, CONTINUE TRACKING
                     center_list.extend((world_x, world_y))
                     count += 1
                     if start_count_t1:
@@ -372,6 +383,7 @@ def run(img):
                         center_list = []
                         start_pick_up = True
                 else:
+                    # IF TOO FAR AWAY FROM LAST DETECTED POSITION, RESET TRACKING VARIABLES
                     t1 = time.time()
                     start_count_t1 = True
                     count = 0
