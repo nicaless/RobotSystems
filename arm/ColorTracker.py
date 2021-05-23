@@ -31,6 +31,7 @@ class ColorTracker:
         self.target_colors = []
         self.rects = {}
         self.rois = {}
+        self.coords = {}
         self.camera = Camera.Camera()
 
     def set_target_colors(self, colors):
@@ -43,6 +44,11 @@ class ColorTracker:
             if colors not in RGB_RANGE.keys():
                 raise ValueError('Unexpected Color')
             self.target_colors.append(colors)
+
+    def reset(self):
+        self.rects = {}
+        self.rois = {}
+        self.coords = {}
 
     def calibrate(self):
         """
@@ -136,6 +142,8 @@ class ColorTracker:
             # convert to world coordinates
             world_x, world_y = convertCoordinate(img_centerx, img_centery,
                                                  SIZE)
+
+            self.coords[r] = (world_x, world_y)
 
             # DRAW A BOX AROUND THE ROI AND DISPLAY THE REAL WORLD COORDINATES
             cv2.drawContours(img, [box], -1, RGB_RANGE[r], 2)
