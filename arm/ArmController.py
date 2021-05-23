@@ -94,5 +94,5 @@ if __name__ == '__main__':
     tracker.track()
 
     coords = tracker.coords['red']
-    arm.pickup(coords)
-    arm.place(GOAL_COORDS['red'])
+    controller.pickup(coords)
+    controller.place(GOAL_COORDS['red'])
