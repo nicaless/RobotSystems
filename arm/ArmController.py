@@ -17,6 +17,7 @@ CLAW_SERVO = 1
 WRIST_SERVO = 2
 CLOSE = 500  # angle when claw is closed
 OPEN = CLOSE - 280  # angle when claw is open
+INIT_CLAW = CLOSE - 50
 PICKUP_HEIGHT = 2
 GOAL_COORDS = {
     'red':   (-15 + 0.5, 12 - 0.5, 1.5),
@@ -29,10 +30,10 @@ class ArmController:
     def __init__(self, arm, board):
         self.arm = arm
         self.board = board
-        self.initial_position()
+        self.initial_position(INIT_CLAW)
 
-    def initial_position(self):
-        self.board.setBusServoPulse(CLAW_SERVO, CLOSE - 50, 300)
+    def initial_position(self, claw_angle):
+        self.board.setBusServoPulse(CLAW_SERVO, claw_angle, 300)
         self.board.setBusServoPulse(WRIST_SERVO, 500, 500)
         self.arm.setPitchRangeMoving((0, 10, 10), -30, -30, -90, 1500)
 
@@ -49,7 +50,7 @@ class ArmController:
 
         self.close()
 
-        self.initial_position()
+        self.initial_position(CLOSE)
 
     def place(self, goal_coordinates):
         x = goal_coordinates[0]
@@ -61,7 +62,7 @@ class ArmController:
 
         self.open()
 
-        self.initial_position()
+        self.initial_position(INIT_CLAW)
 
     def open(self):
         self.board.setBusServoPulse(CLAW_SERVO, OPEN, 500)
@@ -95,4 +96,5 @@ if __name__ == '__main__':
 
     coords = tracker.coords['red']
     controller.pickup(coords)
+    time.sleep(1.5)
     controller.place(GOAL_COORDS['red'])
