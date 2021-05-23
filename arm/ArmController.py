@@ -36,6 +36,7 @@ class ArmController:
         self.board.setBusServoPulse(CLAW_SERVO, claw_angle, 300)
         self.board.setBusServoPulse(WRIST_SERVO, 500, 500)
         self.arm.setPitchRangeMoving((0, 10, 10), -30, -30, -90, 1500)
+        time.sleep(2)
 
     def pickup(self, block_coordinates):
         self.open()
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     tracker.calibrate()
     tracker.track()
 
+    # TODO: Implement multithreading (Currently stops video to move block.)
     coords = tracker.coords['red']
     controller.pickup(coords)
-    time.sleep(1.5)
     controller.place(GOAL_COORDS['red'])
