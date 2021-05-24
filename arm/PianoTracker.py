@@ -41,10 +41,10 @@ class PianoTracker:
             img = self.camera.frame
             if img is not None:
                 img_h, img_w = img.shape[:2]
-                white_key_width = img_w / 10
+                white_key_width = int(img_w / 10)
 
-                cv2.line(img, (0, img_h),
-                         (img_w, img_h),
+                cv2.line(img, (white_key_width, 0),
+                         (white_key_width, img_h),
                          (0, 0, 200), 1)
 
                 cv2.imshow('Align Frame', img)
