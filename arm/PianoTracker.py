@@ -14,21 +14,17 @@ logging_format = "%(asctime)s: %(message)s"
 logging.basicConfig(format=logging_format, level=logging.INFO,
                     datefmt ="%H:%M:%S")
 
-AREA_THRESH = 2500
 ESCAPE_KEY = 27
-RGB_RANGE = {
-    'red': (0, 0, 255),
-    'blue': (255, 0, 0),
-    'green': (0, 255, 0),
-    'black': (0, 0, 0),
-    'white': (255, 255, 255),
-}
 SIZE = (640, 480)
 
 
 class PianoTracker:
     def __init__(self):
         self.camera = Camera.Camera()
+        self.key_map = {
+            'c1': 1, 'd1': 2, 'e1': 3, 'f1': 4, 'g1': 5, 'a1': 6, 'b1': 7,
+            'c2': 8, 'd2': 9, 'e2': 10
+        }
 
 
     def calibrate(self):
@@ -43,28 +39,13 @@ class PianoTracker:
                 img_h, img_w = img.shape[:2]
                 white_key_width = int(img_w / 10)
 
-                cv2.line(img, (white_key_width, 0),
-                         (white_key_width, img_h),
-                         (0, 0, 200), 1)
+                # Draw All Keys
+                for i in self.key_map.values():
+                    cv2.line(img, (white_key_width*i, 0),
+                            (white_key_width*i, img_h),
+                            (0, 0, 200), 1)
 
                 cv2.imshow('Align Frame', img)
-                key = cv2.waitKey(1)
-                if key == ESCAPE_KEY:
-                    break
-        self.camera.camera_close()
-        cv2.destroyAllWindows()
-
-    def track(self):
-        self.camera.camera_open()
-        while True:
-            input_img = self.camera.frame
-            if input_img is not None:
-                img, img_copy = self.image_intake(input_img)
-                frame_lab = self.pre_process(img_copy)
-                color_contours = self.detect_colors(frame_lab)
-                self.save_rois(color_contours)
-                output_img = self.post_process(img)
-                cv2.imshow('Frame', output_img)
                 key = cv2.waitKey(1)
                 if key == ESCAPE_KEY:
                     break
