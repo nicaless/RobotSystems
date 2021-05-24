@@ -37,12 +37,15 @@ class PianoTracker:
             img = self.camera.frame
             if img is not None:
                 img_h, img_w = img.shape[:2]
+
                 white_key_width = int(img_w / 10)
+                white_key_bottom = int(img_h / 5)
+                white_key_top = 5 * white_key_bottom
 
                 # Draw All Keys
                 for i in self.key_map.values():
-                    cv2.line(img, (white_key_width*i, 0),
-                            (white_key_width*i, img_h),
+                    cv2.line(img, (white_key_width*i, white_key_bottom),
+                            (white_key_width*i, white_key_top),
                             (0, 0, 200), 1)
 
                 cv2.imshow('Align Frame', img)
