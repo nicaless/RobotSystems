@@ -42,7 +42,10 @@ class PianoTracker:
             if img is not None:
                 img_h, img_w = img.shape[:2]
                 white_key_width = img_w / 10
-                img[0:img_h, 0:white_key_width] = (0, 0, 0)
+
+                cv2.line(img, (0, img_h),
+                         (img_w, img_h),
+                         (0, 0, 200), 1)
 
                 cv2.imshow('Align Frame', img)
                 key = cv2.waitKey(1)
