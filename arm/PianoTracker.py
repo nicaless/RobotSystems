@@ -59,6 +59,13 @@ class PianoTracker:
                                (img_w, black_key_bottom),
                                (0, 0, 200), 1)
 
+                # TEST
+                self.img_h = img_h
+                self.img_w = img_w
+                self.white_key_width = white_key_width
+                self.white_key_bottom = white_key_bottom
+                self.black_key_bottom = black_key_bottom
+                self.key_top = key_top
                 self.get_key_pos(img, 'c1')
 
                 cv2.imshow('Align Frame', img)
@@ -83,15 +90,14 @@ class PianoTracker:
 
         # only playing white keys right now
         key_top = self.black_key_bottom
-        key_bottom = self.white_key_bottom
+        key_bottom = self.img_h - self.white_key_bottom
 
-        # top left
-        start_point = (key_top, key_rect_left)
+        top_left = (key_rect_left, key_top)
+        top_right = (key_rect_right, key_top)
+        bottom_left = (key_rect_left, key_bottom)
+        bottom_right = (key_rect_right, key_bottom)
 
-        # bottom right
-        end_point = (key_bottom, key_rect_right)
-
-        rect = cv2.minAreaRect((start_point, end_point))
+        rect = cv2.minAreaRect(np.array([top_left, top_right, bottom_left, bottom_right]))
         box = np.int0(cv2.boxPoints(rect))
 
         # TEST DRAW BOX
