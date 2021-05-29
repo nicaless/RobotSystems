@@ -110,8 +110,7 @@ class PianoTracker:
         roi = getROI(box)
 
         img_centerx, img_centery = getCenter(rect, roi, SIZE, KEY_LENGTH)
-        world_x, world_y = convertCoordinate(img_centerx, img_centery,
-                                             KEY_LENGTH)
+        world_x, world_y = convertCoordinate(img_centerx, img_centery, SIZE)
         coords = (world_x, world_y)
 
         return box, coords
