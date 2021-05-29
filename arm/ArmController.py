@@ -15,6 +15,7 @@ logging.basicConfig(format=logging_format, level=logging.INFO,
 
 CLAW_SERVO = 1
 WRIST_SERVO = 2
+FULL_CLOSE = 600
 CLOSE = 500  # angle when claw is closed
 OPEN = CLOSE - 280  # angle when claw is open
 INIT_CLAW = CLOSE - 50
@@ -69,8 +70,11 @@ class ArmController:
         self.board.setBusServoPulse(CLAW_SERVO, OPEN, 500)
         time.sleep(0.5)
 
-    def close(self):
-        self.board.setBusServoPulse(CLAW_SERVO, CLOSE, 500)
+    def close(self, full=False):
+        if full:
+            self.board.setBusServoPulse(CLAW_SERVO, FULL_CLOSE, 500)
+        else:
+            self.board.setBusServoPulse(CLAW_SERVO, CLOSE, 500)
         time.sleep(0.5)
 
     def rotate_to(self, angle):
@@ -92,12 +96,12 @@ class ArmController:
         angle = getAngle(x, y, 0)
         self.rotate_to(angle)
 
-        coord = (x, y, 1)
+        coord = (x, y, 2)
         self.move_to(coord)
 
         time.sleep(0.5)
 
-        self.initial_position(CLOSE)
+        self.initial_position(FULL_CLOSE)
 
 
 if __name__ == '__main__':

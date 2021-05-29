@@ -1,6 +1,6 @@
 import sys
 sys.path.append('/home/pi/ArmPi/')
-import ArmController
+from ArmController import ArmController
 from ArmIK.ArmMoveIK import ArmIK
 from ArmIK.Transform import convertCoordinate, getCenter, getMaskROI, getROI
 import Camera
@@ -8,6 +8,7 @@ import cv2
 import HiwonderSDK.Board as Board
 import logging
 import numpy as np
+import time
 
 DEBUG = logging.DEBUG
 logging_format = "%(asctime)s: %(message)s"
@@ -122,7 +123,8 @@ class PianoTracker:
 if __name__ == '__main__':
     arm = ArmIK()
     controller = ArmController(arm, Board)
-    controller.close()
+    controller.close(full=True)
+    time.sleep(0.5)
 
     tracker = PianoTracker()
     tracker.calibrate()
@@ -139,8 +141,8 @@ if __name__ == '__main__':
             cv2.putText(img, '(' + str(coords[0]) + ',' + str(coords[1]) + ')',
                         (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
-
-            controller.play_key()
+            
+            controller.play_key(coords)
 
             key = cv2.waitKey(1)
             if key == ESCAPE_KEY:
