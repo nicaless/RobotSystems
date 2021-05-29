@@ -21,17 +21,34 @@ SIZE = (640, 480)
 class PianoTracker:
     def __init__(self):
         self.camera = Camera.Camera()
+        self.capture_mode = False
         self.img_h = None
         self.img_w = None
         self.white_key_width = None
         self.white_key_bottom = None
         self.black_key_bottom = None
         self.key_top = None
+        self.latest_img = None
 
         self.key_map = {
             'c1': 1, 'd1': 2, 'e1': 3, 'f1': 4, 'g1': 5, 'a1': 6, 'b1': 7,
             'c2': 8, 'd2': 9, 'e2': 10
         }
+
+    def camera_open(self):
+        self.camera.camera_open()
+        self.capture_mode = True
+
+    def camera_close(self):
+        self.camera.camera_close()
+        self.capture_mode = False
+
+    def get_frame(self):
+        if self.capture_mode:
+            self.latest_img = self.camera.frame
+            return self.latest_img
+        else:
+            return None
 
     def calibrate(self):
         """
@@ -51,6 +68,7 @@ class PianoTracker:
 
                 # Draw All Keys
                 for i in self.key_map.values():
+                    # TODO: I think key_top and key_bottom are swapped
                     cv2.line(img, (white_key_width*i, key_top),
                             (white_key_width*i, white_key_bottom),
                             (0, 0, 200), 1)
@@ -60,13 +78,13 @@ class PianoTracker:
                                (0, 0, 200), 1)
 
                 # TEST
-                self.img_h = img_h
-                self.img_w = img_w
-                self.white_key_width = white_key_width
-                self.white_key_bottom = white_key_bottom
-                self.black_key_bottom = black_key_bottom
-                self.key_top = key_top
-                self.get_key_pos(img, 'c1')
+                # self.img_h = img_h
+                # self.img_w = img_w
+                # self.white_key_width = white_key_width
+                # self.white_key_bottom = white_key_bottom
+                # self.black_key_bottom = black_key_bottom
+                # self.key_top = key_top
+                # self.get_key_pos(img, 'c1')
 
                 cv2.imshow('Align Frame', img)
                 key = cv2.waitKey(1)
@@ -79,11 +97,13 @@ class PianoTracker:
         self.white_key_bottom = white_key_bottom
         self.black_key_bottom = black_key_bottom
         self.key_top = key_top
+        self.latest_img = img
 
         self.camera.camera_close()
         cv2.destroyAllWindows()
 
-    def get_key_pos(self, img, key):
+    def get_key_pos(self, key):
+        # img = self.latest_img
         key_pos = self.key_map[key]
         key_rect_left = self.white_key_width * key_pos - self.white_key_width
         key_rect_right = key_rect_left + self.white_key_width
@@ -100,12 +120,26 @@ class PianoTracker:
         rect = cv2.minAreaRect(np.array([top_left, top_right, bottom_left, bottom_right]))
         box = np.int0(cv2.boxPoints(rect))
 
-        # TEST DRAW BOX
-        cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
-
-
+        return box
 
 
 if __name__ == '__main__':
     tracker = PianoTracker()
     tracker.calibrate()
+
+    tracker.camera_open()
+    while True:
+        img = tracker.get_frame()
+        if img is not None:
+            box = tracker.get_key_pos('c1')
+            
+            # TEST DRAW BOX
+            cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
+            cv2.imshow('Align Frame', img)
+            key = cv2.waitKey(1)
+            if key == ESCAPE_KEY:
+                break
+
+    tracker.camera_close()
+    cv2.destroyAllWindows()
+
