@@ -2,11 +2,8 @@ import sys
 sys.path.append('/home/pi/ArmPi/')
 from ArmIK.Transform import convertCoordinate, getCenter, getMaskROI, getROI
 import Camera
-from CameraCalibration.CalibrationConfig import square_length
 import cv2
-from LABConfig import color_range
 import logging
-import math
 import numpy as np
 
 DEBUG = logging.DEBUG
@@ -16,7 +13,7 @@ logging.basicConfig(format=logging_format, level=logging.INFO,
 
 ESCAPE_KEY = 27
 SIZE = (640, 480)
-
+KEY_LENGTH = 2
 
 class PianoTracker:
     def __init__(self):
@@ -77,15 +74,6 @@ class PianoTracker:
                                (img_w, black_key_bottom),
                                (0, 0, 200), 1)
 
-                # TEST
-                # self.img_h = img_h
-                # self.img_w = img_w
-                # self.white_key_width = white_key_width
-                # self.white_key_bottom = white_key_bottom
-                # self.black_key_bottom = black_key_bottom
-                # self.key_top = key_top
-                # self.get_key_pos(img, 'c1')
-
                 cv2.imshow('Align Frame', img)
                 key = cv2.waitKey(1)
                 if key == ESCAPE_KEY:
@@ -103,7 +91,6 @@ class PianoTracker:
         cv2.destroyAllWindows()
 
     def get_key_pos(self, key):
-        # img = self.latest_img
         key_pos = self.key_map[key]
         key_rect_left = self.white_key_width * key_pos - self.white_key_width
         key_rect_right = key_rect_left + self.white_key_width
@@ -117,10 +104,17 @@ class PianoTracker:
         bottom_left = (key_rect_left, key_bottom)
         bottom_right = (key_rect_right, key_bottom)
 
-        rect = cv2.minAreaRect(np.array([top_left, top_right, bottom_left, bottom_right]))
+        rect = cv2.minAreaRect(np.array([top_left, top_right,
+                                         bottom_left, bottom_right]))
         box = np.int0(cv2.boxPoints(rect))
+        roi = getROI(box)
 
-        return box
+        img_centerx, img_centery = getCenter(rect, roi, SIZE, KEY_LENGTH)
+        world_x, world_y = convertCoordinate(img_centerx, img_centery,
+                                             KEY_LENGTH)
+        coords = (world_x, world_y)
+
+        return box, coords
 
 
 if __name__ == '__main__':
@@ -131,11 +125,15 @@ if __name__ == '__main__':
     while True:
         img = tracker.get_frame()
         if img is not None:
-            box = tracker.get_key_pos('c1')
-            
+            box, coords = tracker.get_key_pos('c1')
+
             # TEST DRAW BOX
             cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
             cv2.imshow('Align Frame', img)
+            cv2.putText(img, '(' + str(coords[0]) + ',' + str(coords[1]) + ')',
+                        (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
+
             key = cv2.waitKey(1)
             if key == ESCAPE_KEY:
                 break
