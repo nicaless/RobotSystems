@@ -85,6 +85,20 @@ class ArmController:
         wait_time = result[2]
         time.sleep(wait_time/1000)
 
+    def play_key(self, key_coord):
+        # self.close()
+        x = key_coord[0]
+        y = key_coord[1]
+        angle = getAngle(x, y, 0)
+        self.rotate_to(angle)
+
+        coord = (x, y, 1)
+        self.move_to(coord)
+
+        time.sleep(0.5)
+
+        self.initial_position(CLOSE)
+
 
 if __name__ == '__main__':
     arm = ArmIK()
