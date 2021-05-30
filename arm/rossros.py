@@ -175,9 +175,9 @@ class Producer(ConsumerProducer):
     but does not read them
     """
 
-    @log_on_start(DEBUG, "{name:s}: Starting to create producer")
-    @log_on_error(DEBUG, "{name:s}: Encountered an error while creating producer")
-    @log_on_end(DEBUG, "{name:s}: Finished creating producer")
+    @log_on_start(DEBUG, "Starting to create producer")
+    @log_on_error(DEBUG, "Encountered an error while creating producer")
+    @log_on_end(DEBUG, "Finished creating producer")
     def __init__(self,
                  producer_function,
                  output_busses,
@@ -209,9 +209,9 @@ class Consumer(ConsumerProducer):
     but does not send to them
     """
 
-    @log_on_start(DEBUG, "{name:s}: Starting to create consumer")
-    @log_on_error(DEBUG, "{name:s}: Encountered an error while creating consumer")
-    @log_on_end(DEBUG, "{name:s}: Finished creating consumer")
+    @log_on_start(DEBUG, "Starting to create consumer")
+    @log_on_error(DEBUG, "Encountered an error while creating consumer")
+    @log_on_end(DEBUG, "Finished creating consumer")
     def __init__(self,
                  consumer_function,
                  input_busses,
@@ -242,9 +242,9 @@ class Timer(Producer):
     "duration" parameter
     """
 
-    @log_on_start(DEBUG, "{name:s}: Starting to create timer")
-    @log_on_error(DEBUG, "{name:s}: Encountered an error while creating timer")
-    @log_on_end(DEBUG, "{name:s}: Finished creating timer")
+    @log_on_start(DEBUG, "Starting to create timer")
+    @log_on_error(DEBUG, "Encountered an error while creating timer")
+    @log_on_end(DEBUG, "Finished creating timer")
     def __init__(self,
                  timer_busses,  # busses that should be set to true when timer triggers
                  duration=5,  # how many seconds the timer should run for (0 is forever)

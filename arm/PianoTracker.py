@@ -60,6 +60,7 @@ class PianoTracker:
         while True:
             img = self.camera.frame
             if img is not None:
+                img_copy = img.copy()
                 img_h, img_w = img.shape[:2]
 
                 white_key_width = int(img_w / 10)
@@ -79,6 +80,7 @@ class PianoTracker:
                                (0, 0, 200), 1)
 
                 cv2.imshow('Align Frame', img)
+#                 cv2.imshow('Keyboard', img)
                 key = cv2.waitKey(1)
                 if key == ESCAPE_KEY:
                     break
@@ -89,12 +91,12 @@ class PianoTracker:
         self.white_key_bottom = white_key_bottom
         self.black_key_bottom = black_key_bottom
         self.key_top = key_top
-        self.latest_img = img
+        self.latest_img = img_copy
 
         self.camera.camera_close()
         cv2.destroyAllWindows()
 
-    def get_key_pos(self, key):
+    def get_key_pos(self, key):            
         key_pos = self.key_map[key]
         key_rect_left = self.white_key_width * key_pos - self.white_key_width
         key_rect_right = key_rect_left + self.white_key_width
@@ -131,24 +133,45 @@ if __name__ == '__main__':
 
     tracker.camera_open()
     # TODO BREAK THREAD ONCE ALL NOTES ARE PLAYED
+    all_keys = ['rest', 'c1']
+    beat = 0
     while True:
         img = tracker.get_frame()
         if img is not None:
-            box, coords = tracker.get_key_pos('c1')
-
-            # TEST DRAW BOX
-            # cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
-            # cv2.imshow('Align Frame', img)
-            # cv2.putText(img, '(' + str(coords[0]) + ',' + str(coords[1]) + ')',
-            #             (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
-            
-            controller.play_key(coords)
-
+            cv2.imshow('Keyboard', img)
             key = cv2.waitKey(1)
             if key == ESCAPE_KEY:
                 break
+            if beat < len(all_keys):
+                if all_keys[beat] == 'rest':
+                    box, coords = tracker.get_key_pos(all_keys[beat+1])
+#                     cv2.imshow('Keyboard', img)
+#                     key = cv2.waitKey(1)
+#                     if key == ESCAPE_KEY:
+#                         break
+                    
+                    controller.play_rest(coords)
+                else:
+                    box, coords = tracker.get_key_pos(all_keys[beat])
 
+                    # DRAW BOX
+#                     cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
+#                     cv2.imshow('Keyboard', img)
+#                     cv2.putText(img, '(' + str(coords[0]) + ',' + str(coords[1]) + ')',
+#                                  (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
+#                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
+#                     key = cv2.waitKey(1)
+#                     if key == ESCAPE_KEY:
+#                         break
+                
+                    controller.play_key(coords)
+                beat += 1
+                
+#             key = cv2.waitKey(1)
+#             if key == ESCAPE_KEY:
+#                 break
+
+    controller.initial_position()
     tracker.camera_close()
     cv2.destroyAllWindows()
 

@@ -5,13 +5,20 @@ sys.path.append('/home/pi/ArmPi/')
 from ArmController import ArmController
 import cv2
 import HiwonderSDK.Board as Board
+import logging
 from PianoTracker import PianoTracker
 from rossros import Bus, Consumer, Producer, Timer
 from rossros import runConcurrently
+import time
 
 if sys.version_info.major == 2:
     print('Please run this program with python3!')
     sys.exit(0)
+
+DEBUG = logging.DEBUG
+logging_format = "%(asctime)s: %(message)s"
+logging.basicConfig(format=logging_format, level=logging.INFO,
+                    datefmt ="%H:%M:%S")
 
 
 tracker = PianoTracker()
@@ -28,9 +35,13 @@ img_producer = Producer(tracker.get_frame, img_bus,
 
 ### THREAD FOR DISPLAYING IMAGES
 def display(img):
+    if img is None:
+        print('no image')
     cv2.imshow('Keyboard', img)
+    cv2.waitKey(1)
+    
 img_consumer = Consumer(display, img_bus,
-                        delay=0, termination_busses=[timer_bus])
+                        delay=1, termination_busses=[timer_bus])
 
 note_bus = Bus(name='Note Bus')
 def get_notes(tracker):
@@ -60,7 +71,14 @@ thread_list = [timer, img_producer, img_consumer]
 
 if __name__ == '__main__':
     tracker.calibrate()
-    runConcurrently()
+    tracker.camera_open()
+#     time.sleep(1)
+#     img = tracker.get_frame()
+#     display(img)
+#     time.sleep(1)
+    runConcurrently(thread_list)
+    tracker.camera_close()
+    cv2.destroyAllWindows()
 
 
 

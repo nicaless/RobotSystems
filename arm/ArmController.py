@@ -81,13 +81,14 @@ class ArmController:
         self.board.setBusServoPulse(WRIST_SERVO, angle, 500)
         time.sleep(0.5)
 
-    def move_to(self, coord):
-        result = self.arm.setPitchRangeMoving(coord, -90, -90, 0, 1000)
+    def move_to(self, coord, time_delay=1):
+        result = self.arm.setPitchRangeMoving(coord, -90, -90, 0, time_delay*1000)
         if not result:
             raise ValueError('Destination out of reach')
 
-        wait_time = result[2]
-        time.sleep(wait_time/1000)
+        wait_time = result[2]/1000
+        max_wait = max(wait_time, time_delay) + 0.1
+        time.sleep(max_wait)
 
     def play_key(self, key_coord):
         # self.close()
@@ -102,6 +103,18 @@ class ArmController:
         time.sleep(0.5)
 
         self.initial_position(FULL_CLOSE)
+        
+    def play_rest(self, rest_coord):
+        x = rest_coord[0]
+        y = rest_coord[1]
+        angle = getAngle(x, y, 0)
+        self.rotate_to(angle)
+
+        coord = (x, y, 5)
+        self.move_to(coord, 3)
+
+        time.sleep(2.5)
+        
 
 
 if __name__ == '__main__':
