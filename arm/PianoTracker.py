@@ -130,17 +130,18 @@ if __name__ == '__main__':
     tracker.calibrate()
 
     tracker.camera_open()
+    # TODO BREAK THREAD ONCE ALL NOTES ARE PLAYED
     while True:
         img = tracker.get_frame()
         if img is not None:
             box, coords = tracker.get_key_pos('c1')
 
             # TEST DRAW BOX
-            cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
-            cv2.imshow('Align Frame', img)
-            cv2.putText(img, '(' + str(coords[0]) + ',' + str(coords[1]) + ')',
-                        (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
+            # cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
+            # cv2.imshow('Align Frame', img)
+            # cv2.putText(img, '(' + str(coords[0]) + ',' + str(coords[1]) + ')',
+            #             (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
             
             controller.play_key(coords)
 
