@@ -17,25 +17,28 @@ ESCAPE_KEY = 27
 
 def user_input(tracker, input_queue, end_queue):
     while True:
-        try:
-            end = end_queue.get_nowait()
-            if end == 'END':
-                break
-        except:
-            continue
+        if not end_queue.empty():
+            print(end_queue.get())
+            break
 
         print('Available Notes: ')
-        print(tracker.key_map.values())
+        print(tracker.key_map.keys())
 
         note = input('Enter note(s) to play: ')
+        
+        if note == 'q':
+            break
 
         input_queue.put({'play': note})
 
     input_queue.put('END')
 
 
+# TODO: INCLUDE QUEUE FROM PROCESS_NOTE to draw note
 def display(tracker, end_queue):
     while True:
+        if not end_queue.empty():
+            break
         img = tracker.get_frame()
         if img is not None:
             cv2.imshow('Keyboard', img)
@@ -44,7 +47,7 @@ def display(tracker, end_queue):
             if key == ESCAPE_KEY:
                 break
 
-    end_queue.put('END')
+    # end_queue.put('END')
     tracker.camera_close()
     cv2.destroyAllWindows()
 
@@ -57,32 +60,43 @@ def process_note(tracker, input_queue, coords_queue):
         if note == 'END':
             break
 
-        box, coords = tracker.get_key_pos(note)
-        coords_queue.put({'coords': coords})
+        if note == 'rest':
+            coords_queue.put('rest')
+        else:
+            box, coords = tracker.get_key_pos(note)
+            coords_queue.put({'coords': coords})
 
     coords_queue.put('END')
 
 
 
 def play(controller, coords_queue):
+    previous_coords = None
     while True:
         if coords_queue.empty():
             continue
         coords = coords_queue.get()
         if coords == 'END':
             break
-
-        controller.play_key(coords['coords'])
+        
+        if coords == 'rest':
+            controller.play_rest(previous_coords)
+        else:
+            controller.play_key(coords['coords'])
+            previous_coords = coords['coords']
 
     controller.initial_position()
 
 
-def print(queue):
+def printer(my_queue):
     while True:
-        if queue.empty():
+        if my_queue.empty():
             continue
-        item = queue.get()
+        print('PRINTING')
+        item = my_queue.get()
         print(item)
+        if item == 'END':
+            break
 
 
 if __name__ == '__main__':
@@ -94,26 +108,40 @@ if __name__ == '__main__':
     tracker.calibrate()
 
     tracker.camera_open()
+    _, coords = tracker.get_key_pos('c1')
+    controller.play_rest(coords)
 
-    end_queue = OneItemQueue()
+    end_queue = Queue()
     input_queue = Queue()
     coords_queue = Queue()
+    
+    input_queue.put('c1')
+    #input_queue.put('rest')
+    input_queue.put('e1')
+    input_queue.put('g1')
+    input_queue.put('END')
 
-    # p1 = Process(target=user_input,
-    #              args=(tracker, input_queue, end_queue))
-    p1 = Process(target=display,
-                 args=(tracker, end_queue))
+    p1 = Process(target=user_input,
+                 args=(tracker, input_queue, end_queue))
+    #p1 = Process(target=display,
+    #             args=(tracker, end_queue))
     p2 = Process(target=process_note,
                  args=(tracker, input_queue, coords_queue))
     p3 = Process(target=play,
                  args=(controller, coords_queue))
-    p4 = Process(target=print,
-                 args=(input_queue))
+    p4 = Process(target=printer,
+                 args=(coords_queue,))
 
-    p1.start()
-    p4.start()
+    #p1.start()
+    p2.start()
+    #p4.start()
+    time.sleep(1)
+    p3.start()
 
-    user_input(tracker, input_queue, end_queue)
+    #user_input(tracker, input_queue, end_queue)
+    display(tracker, end_queue)
+    
+    controller.initial_position()
 
 
 

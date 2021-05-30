@@ -33,7 +33,7 @@ class ArmController:
         self.board = board
         self.initial_position(INIT_CLAW)
 
-    def initial_position(self, claw_angle):
+    def initial_position(self, claw_angle=INIT_CLAW):
         self.board.setBusServoPulse(CLAW_SERVO, claw_angle, 300)
         self.board.setBusServoPulse(WRIST_SERVO, 500, 500)
         self.arm.setPitchRangeMoving((0, 10, 10), -30, -30, -90, 1500)
@@ -90,6 +90,7 @@ class ArmController:
         max_wait = max(wait_time, time_delay) + 0.1
         time.sleep(max_wait)
 
+    # TODO: ACTUALLY PLAY NOTE
     def play_key(self, key_coord):
         # self.close()
         x = key_coord[0]
@@ -97,12 +98,15 @@ class ArmController:
         angle = getAngle(x, y, 0)
         self.rotate_to(angle)
 
-        coord = (x, y, 2)
+        coord = (x, y, 1)
         self.move_to(coord)
 
         time.sleep(0.5)
+        
+        coord = (x, y, 3)
+        self.move_to(coord)
 
-        self.initial_position(FULL_CLOSE)
+        #self.initial_position(FULL_CLOSE)
         
     def play_rest(self, rest_coord):
         x = rest_coord[0]
@@ -110,7 +114,7 @@ class ArmController:
         angle = getAngle(x, y, 0)
         self.rotate_to(angle)
 
-        coord = (x, y, 5)
+        coord = (x, y, 3)
         self.move_to(coord, 3)
 
         time.sleep(2.5)
