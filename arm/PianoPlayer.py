@@ -35,19 +35,23 @@ def user_input(tracker, input_queue, end_queue):
 
 
 def display(tracker, end_queue, box_queue):
+    wait = 0
+    box = None
+    note = None
     while True:
         if not end_queue.empty():
             break
         img = tracker.get_frame()
+        if (not box_queue.empty()):
+            box_info = box_queue.get()
+            box = box_info['box']
+            note = box_info['key']
+            wait = int(2*box_info['wait']) + 1
         if img is not None:
-            if not box_queue.empty():
-                box_info = box_queue.get()
-                box = box_info['box']
-                key = box_info['key']
+            if (box is not None) and (note is not None):
                 cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
-                cv2.putText(img, key,
-                            (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
+                cv2.putText(img, str(note), (min(box[0, 0], box[2, 0]), box[2, 1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
+                wait -= 1
 
             cv2.imshow('Keyboard', img)
             key = cv2.waitKey(1)
@@ -59,7 +63,7 @@ def display(tracker, end_queue, box_queue):
     cv2.destroyAllWindows()
 
 
-def process_note(tracker, input_queue, coords_queue, box_queue):
+def process_note(tracker, input_queue, coords_queue):
     while True:
         if input_queue.empty():
             continue
@@ -70,14 +74,13 @@ def process_note(tracker, input_queue, coords_queue, box_queue):
             coords_queue.put('rest')
         else:
             box, coords, key = tracker.get_key_pos(note)
-            coords_queue.put({'coords': coords})
-
-    box_queue.put({'box': box, 'key': key})
+            coords_queue.put({'coords': coords, 'box': box, 'key': key})
+    
     coords_queue.put('END')
 
 
 
-def play(controller, coords_queue):
+def play(controller, coords_queue, box_queue):
     previous_coords = None
     while True:
         if coords_queue.empty():
@@ -89,7 +92,11 @@ def play(controller, coords_queue):
         if coords == 'rest':
             controller.play_rest(previous_coords)
         else:
-            controller.play_key(coords['coords'])
+            wait_time = controller.play_key(coords['coords'])
+            box_queue.put({'box': coords['box'], 'key': coords['key'], 'wait': wait_time})
+            # TODO PLAY NOTE
+            wait_time = controller.lift_key(coords['coords'])
+            box_queue.put({'box': None, 'key': None, 'wait': wait_time})
             previous_coords = coords['coords']
 
     controller.initial_position()
@@ -113,9 +120,10 @@ if __name__ == '__main__':
 
     tracker = PianoTracker()
     tracker.calibrate()
+    print(tracker.img_h)
 
     tracker.camera_open()
-    _, coords = tracker.get_key_pos('c1')
+    _, coords, _ = tracker.get_key_pos('c1')
     controller.play_rest(coords)
 
     end_queue = Queue()
@@ -134,11 +142,11 @@ if __name__ == '__main__':
     #p1 = Process(target=display,
     #             args=(tracker, end_queue))
     p2 = Process(target=process_note,
-                 args=(tracker, input_queue, coords_queue, box_queue))
+                 args=(tracker, input_queue, coords_queue))
     p3 = Process(target=play,
-                 args=(controller, coords_queue))
+                 args=(controller, coords_queue, box_queue))
     p4 = Process(target=printer,
-                 args=(coords_queue,))
+                 args=(box_queue,))
 
     #p1.start()
     p2.start()

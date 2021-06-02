@@ -89,6 +89,8 @@ class ArmController:
         wait_time = result[2]/1000
         max_wait = max(wait_time, time_delay) + 0.1
         time.sleep(max_wait)
+        
+        return max_wait
 
     # TODO: ACTUALLY PLAY NOTE
     def play_key(self, key_coord):
@@ -99,15 +101,29 @@ class ArmController:
         self.rotate_to(angle)
 
         coord = (x, y, 1)
-        self.move_to(coord)
+        wait1 = self.move_to(coord)
 
-        time.sleep(0.5)
+        #time.sleep(0.5)
         
-        coord = (x, y, 3)
-        self.move_to(coord)
+#         coord = (x, y, 3)
+#         wait2 = self.move_to(coord)
+        
+        return wait1+1
 
         #self.initial_position(FULL_CLOSE)
+    
+    def lift_key(self, key_coord):
+        x = key_coord[0]
+        y = key_coord[1]
+        angle = getAngle(x, y, 0)
+        self.rotate_to(angle)
         
+        coord = (x, y, 3)
+        wait2 = self.move_to(coord)
+        
+        return wait2+1
+        
+    
     def play_rest(self, rest_coord):
         x = rest_coord[0]
         y = rest_coord[1]
