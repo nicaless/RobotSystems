@@ -131,11 +131,15 @@ if __name__ == '__main__':
     coords_queue = Queue()
     box_queue = Queue()
     
-    input_queue.put('c1')
-    #input_queue.put('rest')
-    input_queue.put('e1')
-    input_queue.put('g1')
-    input_queue.put('END')
+#     input_queue.put('c1')
+#     #input_queue.put('rest')
+#     input_queue.put('e1')
+#     input_queue.put('g1')
+#     input_queue.put('END')
+
+    for k in ['c1', 'g1', 'f1', 'e1', 'd1', 'c2', 'g1',
+              'f1', 'e1', 'd1', 'c2', 'g1', 'f1', 'e1', 'f1', 'd1', 'END']:
+        input_queue.put(k)
 
     p1 = Process(target=user_input,
                  args=(tracker, input_queue, end_queue))

@@ -100,7 +100,7 @@ class ArmController:
         angle = getAngle(x, y, 0)
         self.rotate_to(angle)
 
-        coord = (x, y, 1)
+        coord = (x, y, 1.25)
         wait1 = self.move_to(coord)
 
         #time.sleep(0.5)
@@ -132,8 +132,6 @@ class ArmController:
 
         coord = (x, y, 3)
         self.move_to(coord, 3)
-
-        time.sleep(2.5)
         
 
 
