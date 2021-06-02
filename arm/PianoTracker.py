@@ -119,7 +119,7 @@ class PianoTracker:
         world_x, world_y = convertCoordinate(img_centerx, img_centery, SIZE)
         coords = (world_x, world_y)
 
-        return box, coords
+        return box, coords, key
 
 
 if __name__ == '__main__':

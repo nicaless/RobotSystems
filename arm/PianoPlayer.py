@@ -34,38 +34,45 @@ def user_input(tracker, input_queue, end_queue):
     input_queue.put('END')
 
 
-# TODO: INCLUDE QUEUE FROM PROCESS_NOTE to draw note
-def display(tracker, end_queue):
+def display(tracker, end_queue, box_queue):
     while True:
         if not end_queue.empty():
             break
         img = tracker.get_frame()
         if img is not None:
+            if not box_queue.empty():
+                box_info = box_queue.get()
+                box = box_info['box']
+                key = box_info['key']
+                cv2.drawContours(img, [box], -1, (0, 0, 200), 2)
+                cv2.putText(img, key,
+                            (min(box[0, 0], box[2, 0]), box[2, 1] - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 200), 1)
+
             cv2.imshow('Keyboard', img)
             key = cv2.waitKey(1)
 
             if key == ESCAPE_KEY:
                 break
 
-    # end_queue.put('END')
     tracker.camera_close()
     cv2.destroyAllWindows()
 
 
-def process_note(tracker, input_queue, coords_queue):
+def process_note(tracker, input_queue, coords_queue, box_queue):
     while True:
         if input_queue.empty():
             continue
         note = input_queue.get()
         if note == 'END':
             break
-
         if note == 'rest':
             coords_queue.put('rest')
         else:
-            box, coords = tracker.get_key_pos(note)
+            box, coords, key = tracker.get_key_pos(note)
             coords_queue.put({'coords': coords})
 
+    box_queue.put({'box': box, 'key': key})
     coords_queue.put('END')
 
 
@@ -114,6 +121,7 @@ if __name__ == '__main__':
     end_queue = Queue()
     input_queue = Queue()
     coords_queue = Queue()
+    box_queue = Queue()
     
     input_queue.put('c1')
     #input_queue.put('rest')
@@ -126,7 +134,7 @@ if __name__ == '__main__':
     #p1 = Process(target=display,
     #             args=(tracker, end_queue))
     p2 = Process(target=process_note,
-                 args=(tracker, input_queue, coords_queue))
+                 args=(tracker, input_queue, coords_queue, box_queue))
     p3 = Process(target=play,
                  args=(controller, coords_queue))
     p4 = Process(target=printer,
@@ -139,7 +147,7 @@ if __name__ == '__main__':
     p3.start()
 
     #user_input(tracker, input_queue, end_queue)
-    display(tracker, end_queue)
+    display(tracker, end_queue, box_queue)
     
     controller.initial_position()
 
