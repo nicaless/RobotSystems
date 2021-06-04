@@ -8,13 +8,21 @@ import cv2
 import HiwonderSDK.Board as Board
 from multiprocessing import Process, Queue
 from PianoTracker import PianoTracker
+import RPi.GPIO as GPIO
 import time
 
 
 ESCAPE_KEY = 27
+DO_BUZZ = False
 
+def setBuzzer(timer):
+    Board.setBuzzer(0)
+    Board.setBuzzer(1)
+    time.sleep(timer)
+    Board.setBuzzer(0)
 
 def user_input(tracker, input_queue):
+    global DO_BUZZ
     print('Available Notes: ')
     print(tracker.key_map.keys())
 
@@ -28,13 +36,17 @@ def user_input(tracker, input_queue):
 
     notes_to_queue = []
     for n in notes:
-        if n not in tracker.key_map.keys():
+        if (n not in tracker.key_map.keys()) and (n != 'END'):
             print('Invalid Note entered')
             break
         notes_to_queue.append(n)
 
     for n in notes_to_queue:
         input_queue.put(n)
+        
+    do_buzz = input('Sound on? [y/n]: ')
+    if do_buzz == 'y':
+        DO_BUZZ = True
 
     input_queue.put('END')
 
@@ -99,7 +111,9 @@ def play(controller, coords_queue, box_queue):
         else:
             wait_time = controller.play_key(coords['coords'])
             box_queue.put({'box': coords['box'], 'key': coords['key'], 'wait': wait_time})
-            # TODO PLAY NOTE
+            if DO_BUZZ:
+                time.sleep(0.1)
+                setBuzzer(0.1)
             wait_time = controller.lift_key(coords['coords'])
             box_queue.put({'box': None, 'key': None, 'wait': wait_time})
             previous_coords = coords['coords']

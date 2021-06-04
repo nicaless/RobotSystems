@@ -8,11 +8,6 @@ import logging
 import time
 
 
-DEBUG = logging.DEBUG
-logging_format = "%(asctime)s: %(message)s"
-logging.basicConfig(format=logging_format, level=logging.INFO,
-                    datefmt ="%H:%M:%S")
-
 CLAW_SERVO = 1
 WRIST_SERVO = 2
 FULL_CLOSE = 600
@@ -100,8 +95,11 @@ class ArmController:
         angle = getAngle(x, y, 0)
         self.rotate_to(angle)
 
-        coord = (x, y, 1.25)
+        coord = (x, y, 2)
         wait1 = self.move_to(coord)
+        
+        coord = (x, y, 1)
+        wait2 = self.move_to(coord)
 
         #time.sleep(0.5)
         

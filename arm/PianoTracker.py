@@ -10,14 +10,10 @@ import logging
 import numpy as np
 import time
 
-DEBUG = logging.DEBUG
-logging_format = "%(asctime)s: %(message)s"
-logging.basicConfig(format=logging_format, level=logging.INFO,
-                    datefmt ="%H:%M:%S")
-
 ESCAPE_KEY = 27
 SIZE = (640, 480)
 KEY_LENGTH = 2
+
 
 class PianoTracker:
     def __init__(self):
