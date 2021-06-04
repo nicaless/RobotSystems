@@ -80,7 +80,6 @@ class PianoTracker:
                                (0, 0, 200), 1)
 
                 cv2.imshow('Align Frame', img)
-#                 cv2.imshow('Keyboard', img)
                 key = cv2.waitKey(1)
                 if key == ESCAPE_KEY:
                     break

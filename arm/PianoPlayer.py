@@ -7,7 +7,6 @@ from ArmIK.ArmMoveIK import ArmIK
 import cv2
 import HiwonderSDK.Board as Board
 from multiprocessing import Process, Queue
-from one_item_queue import OneItemQueue
 from PianoTracker import PianoTracker
 import time
 
@@ -15,21 +14,27 @@ import time
 ESCAPE_KEY = 27
 
 
-def user_input(tracker, input_queue, end_queue):
-    while True:
-        if not end_queue.empty():
-            print(end_queue.get())
+def user_input(tracker, input_queue):
+    print('Available Notes: ')
+    print(tracker.key_map.keys())
+
+    note = input('Enter note(s) to play: ')
+
+    if note.endswith('txt'):
+        with open(note) as f:
+            note = f.read()
+
+    notes = note.split()
+
+    notes_to_queue = []
+    for n in notes:
+        if n not in tracker.key_map.keys():
+            print('Invalid Note entered')
             break
+        notes_to_queue.append(n)
 
-        print('Available Notes: ')
-        print(tracker.key_map.keys())
-
-        note = input('Enter note(s) to play: ')
-        
-        if note == 'q':
-            break
-
-        input_queue.put({'play': note})
+    for n in notes_to_queue:
+        input_queue.put(n)
 
     input_queue.put('END')
 
@@ -130,41 +135,29 @@ if __name__ == '__main__':
     input_queue = Queue()
     coords_queue = Queue()
     box_queue = Queue()
+
+    user_input(tracker, input_queue)
     
-#     input_queue.put('c1')
-#     #input_queue.put('rest')
-#     input_queue.put('e1')
-#     input_queue.put('g1')
-#     input_queue.put('END')
+    # input_queue.put('c1')
+    # input_queue.put('e1')
+    # input_queue.put('g1')
+    # input_queue.put('END')
 
-    for k in ['c1', 'g1', 'f1', 'e1', 'd1', 'c2', 'g1',
-              'f1', 'e1', 'd1', 'c2', 'g1', 'f1', 'e1', 'f1', 'd1', 'END']:
-        input_queue.put(k)
+    # for k in ['c1', 'g1', 'f1', 'e1', 'd1', 'c2', 'g1',
+    #           'f1', 'e1', 'd1', 'c2', 'g1', 'f1', 'e1', 'f1', 'd1', 'END']:
+    #     input_queue.put(k)
 
-    p1 = Process(target=user_input,
-                 args=(tracker, input_queue, end_queue))
-    #p1 = Process(target=display,
-    #             args=(tracker, end_queue))
-    p2 = Process(target=process_note,
+    p1 = Process(target=process_note,
                  args=(tracker, input_queue, coords_queue))
-    p3 = Process(target=play,
+    p2 = Process(target=play,
                  args=(controller, coords_queue, box_queue))
-    p4 = Process(target=printer,
+    p3 = Process(target=printer,
                  args=(box_queue,))
 
-    #p1.start()
-    p2.start()
-    #p4.start()
+    p1.start()
     time.sleep(1)
-    p3.start()
+    p2.start()
 
-    #user_input(tracker, input_queue, end_queue)
     display(tracker, end_queue, box_queue)
     
     controller.initial_position()
-
-
-
-
-
-
