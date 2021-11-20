@@ -210,11 +210,12 @@ def move():
                     Board.setBusServoPulse(1, servo1 - 280, 500)  # open claw
                     # calculate angle at that the clamper gripper needs to rotate
                     servo2_angle = getAngle(world_X, world_Y, rotation_angle)
-                    Board.setBusServoPulse(2, servo2_angle, 500)
+                    Board.setBusServoPulse(2, servo2_angle, 500)  # do rotation
                     time.sleep(0.8)
                     
                     if not __isRunning:
                         continue
+                    # move to where block is located
                     AK.setPitchRangeMoving((world_X, world_Y, 2), -90, -90, 0, 1000)  # reduce height
                     time.sleep(2)
                     
@@ -225,29 +226,32 @@ def move():
                     
                     if not __isRunning:
                         continue
-                    Board.setBusServoPulse(2, 500, 500)
+                    Board.setBusServoPulse(2, 500, 500)  # rotate back
                     AK.setPitchRangeMoving((world_X, world_Y, 12), -90, -90, 0, 1000)  # move arm up
                     time.sleep(1)
                     
                     if not __isRunning:
                         continue
-                    # Sort and place different colored blocks
+                    # Sort and place different colored blocks (move towards goal area)
                     result = AK.setPitchRangeMoving((coordinate[detect_color][0], coordinate[detect_color][1], 12), -90, -90, 0)   
                     time.sleep(result[2]/1000)
                     
                     if not __isRunning:
                         continue
+                    # calculate angle at that the clamper gripper needs to rotate to place object
                     servo2_angle = getAngle(coordinate[detect_color][0], coordinate[detect_color][1], -90)
-                    Board.setBusServoPulse(2, servo2_angle, 500)
+                    Board.setBusServoPulse(2, servo2_angle, 500)  # do rotation
                     time.sleep(0.5)
 
                     if not __isRunning:
                         continue
+                    # lower arm
                     AK.setPitchRangeMoving((coordinate[detect_color][0], coordinate[detect_color][1], coordinate[detect_color][2] + 3), -90, -90, 0, 500)
                     time.sleep(0.5)
                     
                     if not __isRunning:
                         continue
+                    # lower arm further (more slowly)
                     AK.setPitchRangeMoving((coordinate[detect_color]), -90, -90, 0, 1000)
                     time.sleep(0.8)
                     
@@ -257,7 +261,8 @@ def move():
                     time.sleep(0.8)
                     
                     if not __isRunning:
-                        continue                    
+                        continue
+                    # move arm up
                     AK.setPitchRangeMoving((coordinate[detect_color][0], coordinate[detect_color][1], 12), -90, -90, 0, 800)
                     time.sleep(0.8)
 
